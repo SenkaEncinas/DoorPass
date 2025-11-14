@@ -1,3 +1,6 @@
+import 'package:doorpass/screens/LoginScreen.dart';
+import 'package:doorpass/screens/Staff/StaffScanScreen.dart';
+import 'package:doorpass/screens/User/ComprasScreen.dart';
 import 'package:flutter/material.dart';
 
 class StaffScreen extends StatelessWidget {
@@ -12,6 +15,16 @@ class StaffScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF2D014F),
         elevation: 4,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            // Volver al Login
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+            );
+          },
+        ),
         title: const Text("Panel Staff", style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
@@ -56,7 +69,11 @@ class StaffScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const MainUserScreen(),
+                      builder:
+                          (context) => const ComprasScreen(
+                            bolicheNombre: '',
+                            imagenUrl: '',
+                          ),
                     ),
                   );
                 },
@@ -75,7 +92,6 @@ class StaffScreen extends StatelessWidget {
                 ),
                 child: const Text("Comprar", style: TextStyle(fontSize: 20)),
               ),
-
               const SizedBox(height: 24),
 
               // BOTÓN SCANEAR/BUSCAR
@@ -110,29 +126,6 @@ class StaffScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-// PANTALLAS VACÍAS POR AHORA — LAS IMPLEMENTAREMOS DESPUÉS
-class MainUserScreen extends StatelessWidget {
-  const MainUserScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Text("Pantalla de compras del usuario")),
-    );
-  }
-}
-
-class StaffScanScreen extends StatelessWidget {
-  const StaffScanScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Text("Pantalla del Staff para buscar/scanear")),
     );
   }
 }

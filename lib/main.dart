@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         ), //https://ibb.co/cSctKMXV
         useMaterial3: true,
       ),
-      home: const StaffScreen(),
+      home: const LoginScreen(),
     );
   }
 }

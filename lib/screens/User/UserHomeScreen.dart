@@ -1,3 +1,4 @@
+import 'package:doorpass/screens/User/ComprasScreen.dart';
 import 'package:doorpass/screens/User/HistorialComprasScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -382,7 +383,18 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => ComprasScreen(
+                            bolicheNombre: boliche['nombre'],
+                            imagenUrl: boliche['imagen'],
+                          ),
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.purpleAccent,
                   foregroundColor: Colors.black,
