@@ -1,3 +1,4 @@
+import 'package:doorpass/screens/LoginScreen.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models/user/user_register_dto.dart';
@@ -76,9 +77,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Colors.purpleAccent, Colors.blueAccent],
-                    ).createShader(bounds),
+                    shaderCallback:
+                        (bounds) => const LinearGradient(
+                          colors: [Colors.purpleAccent, Colors.blueAccent],
+                        ).createShader(bounds),
                     child: const Text(
                       'Regístrate 🎈',
                       style: TextStyle(
@@ -96,18 +98,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelText: 'Nombre de usuario',
                       labelStyle: const TextStyle(color: Colors.purpleAccent),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.purpleAccent),
+                        borderSide: const BorderSide(
+                          color: Colors.purpleAccent,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: const BorderSide(color: Colors.blueAccent),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      prefixIcon:
-                          const Icon(Icons.person, color: Colors.purpleAccent),
+                      prefixIcon: const Icon(
+                        Icons.person,
+                        color: Colors.purpleAccent,
+                      ),
                     ),
-                    validator: (value) =>
-                        value!.isEmpty ? 'Ingrese un nombre de usuario' : null,
+                    validator:
+                        (value) =>
+                            value!.isEmpty
+                                ? 'Ingrese un nombre de usuario'
+                                : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -117,18 +126,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelText: 'Correo electrónico',
                       labelStyle: const TextStyle(color: Colors.purpleAccent),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.purpleAccent),
+                        borderSide: const BorderSide(
+                          color: Colors.purpleAccent,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: const BorderSide(color: Colors.blueAccent),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      prefixIcon:
-                          const Icon(Icons.email, color: Colors.purpleAccent),
+                      prefixIcon: const Icon(
+                        Icons.email,
+                        color: Colors.purpleAccent,
+                      ),
                     ),
-                    validator: (value) =>
-                        value!.isEmpty ? 'Ingrese su correo' : null,
+                    validator:
+                        (value) => value!.isEmpty ? 'Ingrese su correo' : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -139,18 +152,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelText: 'Contraseña',
                       labelStyle: const TextStyle(color: Colors.purpleAccent),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.purpleAccent),
+                        borderSide: const BorderSide(
+                          color: Colors.purpleAccent,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: const BorderSide(color: Colors.blueAccent),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      prefixIcon:
-                          const Icon(Icons.lock, color: Colors.purpleAccent),
+                      prefixIcon: const Icon(
+                        Icons.lock,
+                        color: Colors.purpleAccent,
+                      ),
                     ),
-                    validator: (value) =>
-                        value!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                    validator:
+                        (value) =>
+                            value!.length < 6 ? 'Mínimo 6 caracteres' : null,
                   ),
                   const SizedBox(height: 24),
                   if (_error != null)
@@ -161,32 +179,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 8),
                   _loading
                       ? const CircularProgressIndicator(
-                          color: Colors.purpleAccent,
-                        )
+                        color: Colors.purpleAccent,
+                      )
                       : ElevatedButton(
-                          onPressed: _register,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purpleAccent,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 80,
-                              vertical: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            shadowColor: Colors.purpleAccent.withOpacity(0.6),
-                            elevation: 10,
+                        onPressed: _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purpleAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 80,
+                            vertical: 16,
                           ),
-                          child: const Text(
-                            'Registrarme',
-                            style: TextStyle(fontSize: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
+                          shadowColor: Colors.purpleAccent.withOpacity(0.6),
+                          elevation: 10,
                         ),
+                        child: const Text(
+                          'Registrarme',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      );
                     },
                     child: const Text(
                       '¿Ya tienes cuenta? Inicia sesión',
