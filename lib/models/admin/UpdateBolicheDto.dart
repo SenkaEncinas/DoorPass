@@ -1,18 +1,18 @@
-class CrearBolicheDto {
+class UpdateBolicheDto {
   final String nombre;
-  final String direccion;
-  final String descripcion;
+  final String? direccion;
+  final String? descripcion;
   final String? imagenUrl;
 
-  CrearBolicheDto({
+  UpdateBolicheDto({
     required this.nombre,
-    required this.direccion,
-    required this.descripcion,
+    this.direccion,
+    this.descripcion,
     this.imagenUrl,
   });
 
-  factory CrearBolicheDto.fromJson(Map<String, dynamic> json) {
-    return CrearBolicheDto(
+  factory UpdateBolicheDto.fromJson(Map<String, dynamic> json) {
+    return UpdateBolicheDto(
       nombre: json['nombre'],
       direccion: json['direccion'],
       descripcion: json['descripcion'],

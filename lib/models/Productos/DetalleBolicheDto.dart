@@ -1,19 +1,27 @@
-import 'package:doorpass/models/Productos/DetalleManillaTipoDto.dart';
-import 'package:doorpass/models/Productos/DetalleMesaDto.dart';
+import 'DetalleManillaTipoDto.dart';
+import 'DetalleMesaDto.dart';
+import 'DetalleComboDto.dart';
 
 class DetalleBolicheDto {
   final int id;
   final String nombre;
-  final String direccion;
+  final String? direccion;
+  final String? descripcion;
+  final String? imagenUrl;
+
   final List<DetalleManillaTipoDto> manillas;
   final List<DetalleMesaDto> mesas;
+  final List<DetalleComboDto> combos;
 
   DetalleBolicheDto({
     required this.id,
     required this.nombre,
-    required this.direccion,
-    required this.manillas,
-    required this.mesas,
+    this.direccion,
+    this.descripcion,
+    this.imagenUrl,
+    this.manillas = const [],
+    this.mesas = const [],
+    this.combos = const [],
   });
 
   factory DetalleBolicheDto.fromJson(Map<String, dynamic> json) {
@@ -21,26 +29,39 @@ class DetalleBolicheDto {
       id: json['id'],
       nombre: json['nombre'],
       direccion: json['direccion'],
+      descripcion: json['descripcion'],
+      imagenUrl: json['imagenUrl'],
       manillas:
-          (json['manillas'] as List<dynamic>)
-              .map((e) => DetalleManillaTipoDto.fromJson(e))
-              .toList(),
+          json['manillas'] != null
+              ? List<DetalleManillaTipoDto>.from(
+                json['manillas'].map((x) => DetalleManillaTipoDto.fromJson(x)),
+              )
+              : [],
       mesas:
-          (json['mesas'] as List<dynamic>)
-              .map((e) => DetalleMesaDto.fromJson(e))
-              .toList(),
+          json['mesas'] != null
+              ? List<DetalleMesaDto>.from(
+                json['mesas'].map((x) => DetalleMesaDto.fromJson(x)),
+              )
+              : [],
+      combos:
+          json['combos'] != null
+              ? List<DetalleComboDto>.from(
+                json['combos'].map((x) => DetalleComboDto.fromJson(x)),
+              )
+              : [],
     );
   }
-
-  get descripcion => null;
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'nombre': nombre,
       'direccion': direccion,
-      'manillas': manillas.map((e) => e.toJson()).toList(),
-      'mesas': mesas.map((e) => e.toJson()).toList(),
+      'descripcion': descripcion,
+      'imagenUrl': imagenUrl,
+      'manillas': manillas.map((x) => x.toJson()).toList(),
+      'mesas': mesas.map((x) => x.toJson()).toList(),
+      'combos': combos.map((x) => x.toJson()).toList(),
     };
   }
 }

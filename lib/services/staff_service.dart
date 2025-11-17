@@ -1,30 +1,31 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:doorpass/models/Compras/DetalleCompraDto.dart';
-import 'auth_service.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StaffService {
   final String _baseUrl =
-      'https://app-251115115117.azurewebsites.net/api/staff';
-  final AuthService _authService = AuthService();
+      'https://app-251116165954.azurewebsites.net/api/staff';
 
-  // Obtener historial de compras de todos los usuarios
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  // --- HISTORIAL DE COMPRAS PARA STAFF/ADMIN ---
   Future<List<DetalleCompraDto>> getHistorialCompras() async {
-    final token = await _authService.getToken();
+    final token = await _getToken();
+    if (token == null) return [];
+
     final response = await http.get(
       Uri.parse('$_baseUrl/historial'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
-      return data.map((json) => DetalleCompraDto.fromJson(json)).toList();
-    } else {
-      print('Error al obtener historial: ${response.body}');
-      return [];
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => DetalleCompraDto.fromJson(json)).toList();
     }
+    return [];
   }
 }

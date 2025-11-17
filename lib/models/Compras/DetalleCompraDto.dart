@@ -1,3 +1,4 @@
+import 'package:doorpass/models/Compras/ItemComboCompradoDto.dart';
 import 'package:doorpass/models/Compras/ItemCompraDto.dart';
 
 class DetalleCompraDto {
@@ -5,6 +6,7 @@ class DetalleCompraDto {
   final DateTime fechaCompra;
   final double totalPagado;
   final String tipoCompra;
+  final bool estaActiva;
 
   final int bolicheId;
   final String nombreBoliche;
@@ -14,13 +16,16 @@ class DetalleCompraDto {
   final String emailUsuario;
 
   final String? mesaReservada;
+
   final List<ItemCompradoDto> manillasCompradas;
+  final List<ItemComboCompradoDto> combosComprados;
 
   DetalleCompraDto({
     required this.compraId,
     required this.fechaCompra,
     required this.totalPagado,
     required this.tipoCompra,
+    required this.estaActiva,
     required this.bolicheId,
     required this.nombreBoliche,
     required this.usuarioId,
@@ -28,6 +33,7 @@ class DetalleCompraDto {
     required this.emailUsuario,
     this.mesaReservada,
     required this.manillasCompradas,
+    required this.combosComprados,
   });
 
   factory DetalleCompraDto.fromJson(Map<String, dynamic> json) {
@@ -36,6 +42,7 @@ class DetalleCompraDto {
       fechaCompra: DateTime.parse(json['fechaCompra']),
       totalPagado: (json['totalPagado'] as num).toDouble(),
       tipoCompra: json['tipoCompra'],
+      estaActiva: json['estaActiva'],
       bolicheId: json['bolicheId'],
       nombreBoliche: json['nombreBoliche'],
       usuarioId: json['usuarioId'],
@@ -43,21 +50,15 @@ class DetalleCompraDto {
       emailUsuario: json['emailUsuario'],
       mesaReservada: json['mesaReservada'],
       manillasCompradas:
-          json['manillasCompradas'] != null
-              ? (json['manillasCompradas'] as List)
-                  .map((e) => ItemCompradoDto.fromJson(e))
-                  .toList()
-              : [],
+          (json['manillasCompradas'] as List)
+              .map((e) => ItemCompradoDto.fromJson(e))
+              .toList(),
+      combosComprados:
+          (json['combosComprados'] as List)
+              .map((e) => ItemComboCompradoDto.fromJson(e))
+              .toList(),
     );
   }
-
-  get usuarioNombre => null;
-
-  get id => null;
-
-  get total => null;
-
-  get fecha => null;
 
   Map<String, dynamic> toJson() {
     return {
@@ -65,6 +66,7 @@ class DetalleCompraDto {
       'fechaCompra': fechaCompra.toIso8601String(),
       'totalPagado': totalPagado,
       'tipoCompra': tipoCompra,
+      'estaActiva': estaActiva,
       'bolicheId': bolicheId,
       'nombreBoliche': nombreBoliche,
       'usuarioId': usuarioId,
@@ -72,6 +74,7 @@ class DetalleCompraDto {
       'emailUsuario': emailUsuario,
       'mesaReservada': mesaReservada,
       'manillasCompradas': manillasCompradas.map((e) => e.toJson()).toList(),
+      'combosComprados': combosComprados.map((e) => e.toJson()).toList(),
     };
   }
 }

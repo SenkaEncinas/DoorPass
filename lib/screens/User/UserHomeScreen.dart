@@ -3,11 +3,9 @@ import 'package:doorpass/models/Productos/DetalleBolichesSimpleDto.dart';
 import 'package:doorpass/screens/LoginScreen.dart';
 import 'package:doorpass/screens/User/ComprasScreen.dart';
 import 'package:doorpass/services/productos_service.dart';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'HistorialComprasScreen.dart';
 
 class UserHomeScreen extends StatefulWidget {
@@ -19,7 +17,7 @@ class UserHomeScreen extends StatefulWidget {
 
 class _UserHomeScreenState extends State<UserHomeScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final ProductsService _productsService = ProductsService();
+  final ProductosService _productsService = ProductosService();
 
   List<DetalleBolicheSimpleDto> boliches = [];
   DetalleBolicheDto? _seleccionado;
@@ -46,9 +44,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   Future<void> _cargarDetalle(int bolicheId) async {
     try {
       final detalle = await _productsService.getBolicheDetalle(bolicheId);
-      if (detalle != null) {
-        setState(() => _seleccionado = detalle);
-      }
+      if (detalle != null) setState(() => _seleccionado = detalle);
     } catch (e) {
       debugPrint('Error cargando detalle: $e');
     }
@@ -97,7 +93,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const HistorialComprasScreen(),
+                    builder: (_) => const HistorialComprasScreen(),
                   ),
                 );
               },
@@ -117,13 +113,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
             },
           ),
         ],
       ),
-
       body:
           _loading
               ? const Center(
@@ -158,68 +153,61 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   Widget _buildListaBoliches() {
     return Expanded(
       flex: 2,
-      child: ListView(
-        children:
-            boliches
-                .where(
-                  (b) => b.nombre.toLowerCase().contains(
-                    _searchController.text.toLowerCase(),
-                  ),
-                )
-                .map(
-                  (b) => ListTile(
-                    title: Text(
-                      b.nombre,
-                      style: GoogleFonts.orbitron(color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      b.direccion,
-                      style: GoogleFonts.orbitron(color: Colors.purpleAccent),
-                    ),
-                    onTap: () => _cargarDetalle(b.id),
-                  ),
-                )
-                .toList(),
+      child: ListView.builder(
+        itemCount: boliches.length,
+        itemBuilder: (_, index) {
+          final b = boliches[index];
+          if (!b.nombre.toLowerCase().contains(
+            _searchController.text.toLowerCase(),
+          ))
+            return const SizedBox.shrink();
+          return ListTile(
+            title: Text(
+              b.nombre,
+              style: GoogleFonts.orbitron(color: Colors.white),
+            ),
+            subtitle: Text(
+              b.direccion,
+              style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+            ),
+            onTap: () => _cargarDetalle(b.id),
+          );
+        },
       ),
     );
   }
 
   Widget _buildListaMovil() {
-    return ListView(
-      children:
-          boliches
-              .where(
-                (b) => b.nombre.toLowerCase().contains(
-                  _searchController.text.toLowerCase(),
-                ),
-              )
-              .map(
-                (b) => Card(
-                  color: const Color(0xFF2D014F).withOpacity(0.85),
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: ListTile(
-                    title: Text(
-                      b.nombre,
-                      style: GoogleFonts.orbitron(color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      b.direccion,
-                      style: GoogleFonts.orbitron(color: Colors.purpleAccent),
-                    ),
-                    trailing: ElevatedButton(
-                      onPressed: () => _cargarDetalle(b.id),
-                      child: const Text('Ver más'),
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
+    return ListView.builder(
+      itemCount: boliches.length,
+      itemBuilder: (_, index) {
+        final b = boliches[index];
+        if (!b.nombre.toLowerCase().contains(
+          _searchController.text.toLowerCase(),
+        ))
+          return const SizedBox.shrink();
+        return Card(
+          color: const Color(0xFF2D014F).withOpacity(0.85),
+          margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: ListTile(
+            title: Text(
+              b.nombre,
+              style: GoogleFonts.orbitron(color: Colors.white),
+            ),
+            subtitle: Text(
+              b.direccion,
+              style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+            ),
+            trailing: ElevatedButton(
+              onPressed: () => _cargarDetalle(b.id),
+              child: const Text('Ver más'),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -230,7 +218,15 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Nombre y dirección
+            if (boliche.imagenUrl != null && boliche.imagenUrl!.isNotEmpty)
+              Center(
+                child: Image.network(
+                  boliche.imagenUrl!,
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            const SizedBox(height: 16),
             Text(
               boliche.nombre,
               style: GoogleFonts.orbitron(
@@ -241,7 +237,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              boliche.direccion,
+              boliche.direccion ?? '',
               style: GoogleFonts.orbitron(
                 color: Colors.purpleAccent,
                 fontSize: 16,
@@ -280,18 +276,35 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 style: GoogleFonts.orbitron(color: Colors.purpleAccent),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // Botón Comprar
+            // Combos
+            if (boliche.combos.isNotEmpty) ...[
+              const Text(
+                'Combos:',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              ...boliche.combos.map(
+                (c) => Text(
+                  '${c.nombre}: Bs. ${c.precio}',
+                  style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  // Aquí puedes abrir la pantalla de ComprasScreen real
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder:
-                          (context) => ComprasScreen(
+                          (_) => ComprasScreen(
                             bolicheId: boliche.id,
                             bolicheNombre: boliche.nombre,
                           ),

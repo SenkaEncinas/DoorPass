@@ -1,21 +1,21 @@
-class CrearBolicheDto {
+class CrearComboDto {
   final String nombre;
-  final String direccion;
-  final String descripcion;
+  final String? descripcion;
+  final double precio;
   final String? imagenUrl;
 
-  CrearBolicheDto({
+  CrearComboDto({
     required this.nombre,
-    required this.direccion,
-    required this.descripcion,
+    this.descripcion,
+    required this.precio,
     this.imagenUrl,
   });
 
-  factory CrearBolicheDto.fromJson(Map<String, dynamic> json) {
-    return CrearBolicheDto(
+  factory CrearComboDto.fromJson(Map<String, dynamic> json) {
+    return CrearComboDto(
       nombre: json['nombre'],
-      direccion: json['direccion'],
       descripcion: json['descripcion'],
+      precio: (json['precio'] as num).toDouble(),
       imagenUrl: json['imagenUrl'],
     );
   }
@@ -23,8 +23,8 @@ class CrearBolicheDto {
   Map<String, dynamic> toJson() {
     return {
       'nombre': nombre,
-      'direccion': direccion,
       'descripcion': descripcion,
+      'precio': precio,
       'imagenUrl': imagenUrl,
     };
   }

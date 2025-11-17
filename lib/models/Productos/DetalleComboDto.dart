@@ -1,24 +1,24 @@
-class DetalleBolicheSimpleDto {
+class DetalleComboDto {
   final int id;
   final String nombre;
-  final String direccion;
   final String descripcion;
+  final double precio;
   final String imagenUrl;
 
-  DetalleBolicheSimpleDto({
+  DetalleComboDto({
     required this.id,
     required this.nombre,
-    required this.direccion,
     required this.descripcion,
+    required this.precio,
     required this.imagenUrl,
   });
 
-  factory DetalleBolicheSimpleDto.fromJson(Map<String, dynamic> json) {
-    return DetalleBolicheSimpleDto(
+  factory DetalleComboDto.fromJson(Map<String, dynamic> json) {
+    return DetalleComboDto(
       id: json['id'],
       nombre: json['nombre'],
-      direccion: json['direccion'],
       descripcion: json['descripcion'],
+      precio: (json['precio'] as num).toDouble(),
       imagenUrl: json['imagenUrl'],
     );
   }
@@ -27,8 +27,8 @@ class DetalleBolicheSimpleDto {
     return {
       'id': id,
       'nombre': nombre,
-      'direccion': direccion,
       'descripcion': descripcion,
+      'precio': precio,
       'imagenUrl': imagenUrl,
     };
   }

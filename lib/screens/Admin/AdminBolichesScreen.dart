@@ -16,7 +16,7 @@ class AdminBolichesScreen extends StatefulWidget {
 }
 
 class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
-  final ProductsService _productsService = ProductsService();
+  final ProductosService _productsService = ProductosService();
   final AdminService _adminService = AdminService();
 
   List<DetalleBolicheSimpleDto> boliches = [];
@@ -30,8 +30,14 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
 
   Future<void> _cargarBoliches() async {
     setState(() => _loading = true);
-    boliches = await _productsService.getBoliches();
-    setState(() => _loading = false);
+    try {
+      final lista = await _productsService.getBoliches();
+      setState(() => boliches = lista);
+    } catch (e) {
+      debugPrint('Error cargando boliches: $e');
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
   @override
@@ -52,7 +58,7 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
             },
           ),
@@ -78,32 +84,46 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                     elevation: 6,
                     shadowColor: Colors.purpleAccent,
                     margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: ListTile(
-                      textColor: Colors.white,
+                      contentPadding: const EdgeInsets.all(12),
+                      leading:
+                          boliche.imagenUrl != null &&
+                                  boliche.imagenUrl!.isNotEmpty
+                              ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  boliche.imagenUrl!,
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                              : null,
                       title: Text(
                         boliche.nombre,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+                        style: GoogleFonts.orbitron(
                           color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
                       ),
                       subtitle: Text(
                         boliche.direccion,
-                        style: const TextStyle(color: Colors.white70),
+                        style: GoogleFonts.orbitron(color: Colors.white70),
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.edit, color: Colors.white),
                         onPressed: () async {
-                          // Redirigir a la pantalla de edición de boliche
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (context) =>
-                                      EdicionAdminBoliche(boliche: boliche),
+                                  (_) => EdicionAdminBoliche(boliche: boliche),
                             ),
                           );
-                          // Recargar la lista al volver
                           _cargarBoliches();
                         },
                       ),
@@ -117,6 +137,8 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
   void _mostrarDialogoCrear() {
     final nombreController = TextEditingController();
     final direccionController = TextEditingController();
+    final descripcionController = TextEditingController();
+    final imagenController = TextEditingController();
 
     showDialog(
       context: context,
@@ -127,12 +149,16 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
               'Crear nuevo boliche',
               style: TextStyle(color: Colors.white),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _campoTexto('Nombre', nombreController),
-                _campoTexto('Dirección', direccionController),
-              ],
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _campoTexto('Nombre', nombreController),
+                  _campoTexto('Dirección', direccionController),
+                  _campoTexto('Descripción', descripcionController),
+                  _campoTexto('Imagen URL (opcional)', imagenController),
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -148,13 +174,19 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                 ),
                 onPressed: () async {
                   if (nombreController.text.isEmpty ||
-                      direccionController.text.isEmpty)
+                      direccionController.text.isEmpty ||
+                      descripcionController.text.isEmpty)
                     return;
 
                   final nuevoBoliche = await _adminService.crearBoliche(
                     CrearBolicheDto(
                       nombre: nombreController.text,
                       direccion: direccionController.text,
+                      descripcion: descripcionController.text,
+                      imagenUrl:
+                          imagenController.text.isNotEmpty
+                              ? imagenController.text
+                              : null,
                     ),
                   );
 
@@ -163,7 +195,9 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                       DetalleBolicheSimpleDto(
                         id: nuevoBoliche.id,
                         nombre: nuevoBoliche.nombre,
-                        direccion: nuevoBoliche.direccion,
+                        direccion: nuevoBoliche.direccion ?? '',
+                        imagenUrl: nuevoBoliche.imagenUrl ?? '',
+                        descripcion: '',
                       ),
                     );
                     setState(() {});

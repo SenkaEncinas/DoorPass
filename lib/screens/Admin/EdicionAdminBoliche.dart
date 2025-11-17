@@ -5,6 +5,7 @@ import 'package:doorpass/models/Productos/DetalleBolichesSimpleDto.dart';
 import 'package:doorpass/models/admin/CrearManillaTipoDto.dart';
 import 'package:doorpass/models/admin/CrearMesaDto.dart';
 import 'package:doorpass/models/admin/CrearStaffDto.dart';
+import 'package:doorpass/models/admin/CrearComboDto.dart';
 import 'package:doorpass/services/admin_service.dart';
 import 'package:doorpass/services/productos_service.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,7 +20,7 @@ class EdicionAdminBoliche extends StatefulWidget {
 }
 
 class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
-  final ProductsService _productsService = ProductsService();
+  final ProductosService _productsService = ProductosService();
   final AdminService _adminService = AdminService();
 
   DetalleBolicheDto? _detalle;
@@ -46,6 +47,7 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
         title: Text(widget.boliche.nombre),
         backgroundColor: const Color(0xFF6A0DAD),
       ),
+      backgroundColor: const Color(0xFF100018),
       body:
           _loading
               ? const Center(
@@ -72,7 +74,7 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
                       ),
                     ),
                     Text(
-                      _detalle!.direccion,
+                      _detalle!.direccion ?? '',
                       style: GoogleFonts.orbitron(
                         color: Colors.purpleAccent,
                         fontSize: 16,
@@ -84,14 +86,15 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
                     _seccionMesas(),
                     const SizedBox(height: 20),
                     _seccionStaff(),
+                    const SizedBox(height: 20),
+                    _seccionCombos(),
                   ],
                 ),
               ),
-      backgroundColor: const Color(0xFF100018),
     );
   }
 
-  // Sección Manillas
+  // ===================== Sección Manillas =====================
   Widget _seccionManillas() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,7 +119,7 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
         const SizedBox(height: 8),
         ...?_detalle?.manillas.map(
           (m) => Text(
-            '${m.nombre}: \$${m.precio} (Stock: ${m.stock})',
+            '${m.nombre}: Bs. ${m.precio} (Stock: ${m.stock})',
             style: GoogleFonts.orbitron(color: Colors.purpleAccent),
           ),
         ),
@@ -124,71 +127,6 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
     );
   }
 
-  // Sección Mesas
-  Widget _seccionMesas() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Mesas:',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _crearMesa,
-              child: const Text('Nueva Mesa'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ...?_detalle?.mesas.map(
-          (m) => Text(
-            '${m.nombre}: \$${m.precio}',
-            style: GoogleFonts.orbitron(color: Colors.purpleAccent),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Sección Staff
-  Widget _seccionStaff() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Staff:',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _crearStaff,
-              child: const Text('Nuevo Staff'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Lista de staff aún no implementada',
-          style: TextStyle(color: Colors.purpleAccent),
-        ),
-      ],
-    );
-  }
-
-  // Crear manilla
   void _crearManilla() {
     final nombreController = TextEditingController();
     final precioController = TextEditingController();
@@ -242,7 +180,39 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
     );
   }
 
-  // Crear mesa
+  // ===================== Sección Mesas =====================
+  Widget _seccionMesas() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Mesas:',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            ElevatedButton(
+              onPressed: _crearMesa,
+              child: const Text('Nueva Mesa'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...?_detalle?.mesas.map(
+          (m) => Text(
+            '${m.nombreONumero}: Bs. ${m.precioReserva}',
+            style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _crearMesa() {
     final nombreController = TextEditingController();
     final ubicacionController = TextEditingController();
@@ -296,7 +266,37 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
     );
   }
 
-  // Crear staff
+  // ===================== Sección Staff =====================
+  Widget _seccionStaff() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Staff:',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            ElevatedButton(
+              onPressed: _crearStaff,
+              child: const Text('Nuevo Staff'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Lista de staff aún no implementada',
+          style: TextStyle(color: Colors.purpleAccent),
+        ),
+      ],
+    );
+  }
+
   void _crearStaff() {
     final nombreController = TextEditingController();
     final emailController = TextEditingController();
@@ -349,6 +349,98 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
     );
   }
 
+  // ===================== Sección Combos =====================
+  Widget _seccionCombos() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Combos:',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            ElevatedButton(
+              onPressed: _crearCombo,
+              child: const Text('Nuevo Combo'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...?_detalle?.combos.map(
+          (c) => Text(
+            '${c.nombre}: Bs. ${c.precio}',
+            style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+          ),
+        ),
+        if ((_detalle?.combos.isEmpty ?? true))
+          const Text(
+            'No hay combos disponibles',
+            style: TextStyle(color: Colors.purpleAccent),
+          ),
+      ],
+    );
+  }
+
+  void _crearCombo() {
+    final nombreController = TextEditingController();
+    final precioController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            backgroundColor: const Color(0xFF1A0026),
+            title: const Text(
+              'Crear nuevo combo',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _campoTexto('Nombre', nombreController),
+                _campoTexto('Precio', precioController, isNumber: true),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Cancelar',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nombreController.text.isEmpty) return;
+
+                  final dto = CrearComboDto(
+                    nombre: nombreController.text,
+                    precio: double.tryParse(precioController.text) ?? 0,
+                  );
+
+                  final nuevo = await _adminService.crearCombo(
+                    _detalle!.id,
+                    dto,
+                  );
+                  if (nuevo != null) {
+                    _cargarDetalle();
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Guardar'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  // ===================== Campo de texto =====================
   Widget _campoTexto(
     String label,
     TextEditingController controller, {
