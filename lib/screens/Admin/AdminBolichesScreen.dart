@@ -1,7 +1,12 @@
-// lib/screens/admin_boliches_screen.dart
-import 'package:doorpass/screens/Admin/EditarBolicheScreen.dart';
+// lib/screens/Admin/AdminBolichesScreen.dart
 import 'package:flutter/material.dart';
+import 'package:doorpass/models/Productos/DetalleBolichesSimpleDto.dart';
+import 'package:doorpass/screens/Admin/EdicionAdminBoliche.dart';
 import 'package:doorpass/screens/LoginScreen.dart';
+import 'package:doorpass/models/admin/CrearBolicheDto.dart';
+import 'package:doorpass/services/admin_service.dart';
+import 'package:doorpass/services/productos_service.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AdminBolichesScreen extends StatefulWidget {
   const AdminBolichesScreen({super.key});
@@ -11,23 +16,23 @@ class AdminBolichesScreen extends StatefulWidget {
 }
 
 class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
-  // Lista temporal de boliches (frontend)
-  final List<Map<String, dynamic>> boliches = [
-    {
-      'nombre': 'Boliche Eclipse',
-      'precio': 120,
-      'imagen': 'https://picsum.photos/200',
-      'manillas': {'Normal': 120, 'VIP': 200, 'Super VIP': 350, 'Mesa': 500},
-      'combos': {'Pack 1': 50, 'Pack 2': 80},
-    },
-    {
-      'nombre': 'Club Nocturno Lunar',
-      'precio': 150,
-      'imagen': 'https://picsum.photos/201',
-      'manillas': {'Normal': 150, 'VIP': 250, 'Super VIP': 400, 'Mesa': 600},
-      'combos': {'Pack 1': 60, 'Pack 2': 90},
-    },
-  ];
+  final ProductsService _productsService = ProductsService();
+  final AdminService _adminService = AdminService();
+
+  List<DetalleBolicheSimpleDto> boliches = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarBoliches();
+  }
+
+  Future<void> _cargarBoliches() async {
+    setState(() => _loading = true);
+    boliches = await _productsService.getBoliches();
+    setState(() => _loading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,112 +40,99 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
       backgroundColor: const Color(0xFF0A0014),
       appBar: AppBar(
         backgroundColor: const Color(0xFF6A0DAD),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-            );
-          },
-        ),
         title: const Text(
           'Administrador de Boliches',
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: 'Cerrar sesión',
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF9D00FF),
-        onPressed: () => _mostrarDialogoCrear(),
+        onPressed: _mostrarDialogoCrear,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: boliches.length,
-        itemBuilder: (context, index) {
-          final item = boliches[index];
-          return Card(
-            color: const Color(0xFF1A0026),
-            elevation: 6,
-            shadowColor: Colors.purpleAccent,
-            margin: const EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              textColor: Colors.white,
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  item['imagen'],
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  errorBuilder:
-                      (context, error, stackTrace) => Container(
-                        width: 60,
-                        height: 60,
-                        color: Colors.black26,
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.white54,
+      body:
+          _loading
+              ? const Center(
+                child: CircularProgressIndicator(color: Colors.purpleAccent),
+              )
+              : ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: boliches.length,
+                itemBuilder: (context, index) {
+                  final boliche = boliches[index];
+                  return Card(
+                    color: const Color(0xFF1A0026),
+                    elevation: 6,
+                    shadowColor: Colors.purpleAccent,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: ListTile(
+                      textColor: Colors.white,
+                      title: Text(
+                        boliche.nombre,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
-                ),
+                      subtitle: Text(
+                        boliche.direccion,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.white),
+                        onPressed: () async {
+                          // Redirigir a la pantalla de edición de boliche
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) =>
+                                      EdicionAdminBoliche(boliche: boliche),
+                            ),
+                          );
+                          // Recargar la lista al volver
+                          _cargarBoliches();
+                        },
+                      ),
+                    ),
+                  );
+                },
               ),
-              title: Text(
-                item['nombre'],
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              subtitle: Text(
-                'Precio base: Bs. ${item['precio']}',
-                style: const TextStyle(color: Colors.white70),
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.white),
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => EditarBolicheScreen(boliche: item),
-                        ),
-                      );
-                      setState(() {});
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.redAccent),
-                    onPressed: () => _confirmarEliminar(index),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
     );
   }
 
-  void _confirmarEliminar(int index) {
+  void _mostrarDialogoCrear() {
+    final nombreController = TextEditingController();
+    final direccionController = TextEditingController();
+
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (_) => AlertDialog(
             backgroundColor: const Color(0xFF1A0026),
             title: const Text(
-              'Eliminar boliche',
+              'Crear nuevo boliche',
               style: TextStyle(color: Colors.white),
             ),
-            content: const Text(
-              '¿Estás seguro que quieres eliminar este boliche?',
-              style: TextStyle(color: Colors.white70),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _campoTexto('Nombre', nombreController),
+                _campoTexto('Dirección', direccionController),
+              ],
             ),
             actions: [
               TextButton(
@@ -152,96 +144,43 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: const Color(0xFF9D00FF),
                 ),
-                onPressed: () {
-                  setState(() => boliches.removeAt(index));
-                  Navigator.pop(context);
+                onPressed: () async {
+                  if (nombreController.text.isEmpty ||
+                      direccionController.text.isEmpty)
+                    return;
+
+                  final nuevoBoliche = await _adminService.crearBoliche(
+                    CrearBolicheDto(
+                      nombre: nombreController.text,
+                      direccion: direccionController.text,
+                    ),
+                  );
+
+                  if (nuevoBoliche != null) {
+                    boliches.add(
+                      DetalleBolicheSimpleDto(
+                        id: nuevoBoliche.id,
+                        nombre: nuevoBoliche.nombre,
+                        direccion: nuevoBoliche.direccion,
+                      ),
+                    );
+                    setState(() {});
+                    Navigator.pop(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Error al crear boliche')),
+                    );
+                  }
                 },
                 child: const Text(
-                  'Eliminar',
+                  'Guardar',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
             ],
           ),
-    );
-  }
-
-  void _mostrarDialogoCrear() {
-    final nombreController = TextEditingController();
-    final precioController = TextEditingController();
-    final imagenController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => _dialogBase(
-            titulo: 'Crear nuevo boliche',
-            nombreController: nombreController,
-            precioController: precioController,
-            imagenController: imagenController,
-            onConfirm: () {
-              setState(() {
-                boliches.add({
-                  'nombre':
-                      nombreController.text.isEmpty
-                          ? 'Sin nombre'
-                          : nombreController.text,
-                  'precio': int.tryParse(precioController.text) ?? 0,
-                  'imagen':
-                      imagenController.text.isEmpty
-                          ? 'https://placehold.co/200x200'
-                          : imagenController.text,
-                  'manillas': {
-                    'Normal': 0,
-                    'VIP': 0,
-                    'Super VIP': 0,
-                    'Mesa': 0,
-                  },
-                  'combos': {},
-                });
-              });
-              Navigator.pop(context);
-            },
-          ),
-    );
-  }
-
-  Widget _dialogBase({
-    required String titulo,
-    required TextEditingController nombreController,
-    required TextEditingController precioController,
-    required TextEditingController imagenController,
-    required VoidCallback onConfirm,
-  }) {
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1A0026),
-      title: Text(titulo, style: const TextStyle(color: Colors.white)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _campoTexto('Nombre', nombreController),
-          _campoTexto('Precio base', precioController, isNumber: true),
-          _campoTexto('URL de imagen', imagenController),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cancelar',
-            style: TextStyle(color: Colors.white70),
-          ),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF9D00FF),
-          ),
-          onPressed: onConfirm,
-          child: const Text('Guardar', style: TextStyle(color: Colors.white)),
-        ),
-      ],
     );
   }
 

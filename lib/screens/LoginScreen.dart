@@ -1,7 +1,11 @@
+import 'package:doorpass/models/Auth/LoginDto.dart';
+import 'package:doorpass/screens/Admin/AdminBolichesScreen.dart';
 import 'package:doorpass/screens/RegisterScreen.dart';
+import 'package:doorpass/screens/Staff/StaffScreen.dart';
+import 'package:doorpass/screens/User/UserHomeScreen.dart';
+import 'package:doorpass/services/auth_service.dart';
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../models/user/user_login_dto.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,180 +15,168 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  final _authService = AuthService();
-  bool _loading = false;
-  String? _error;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
 
-  Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
+  bool _isLoading = false;
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    final dto = UserLoginDto(
-      username: _usernameCtrl.text.trim(),
-      password: _passwordCtrl.text.trim(),
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: Colors.red,
+      ),
     );
+  }
 
-    final success = await _authService.login(dto);
+  void _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-    setState(() {
-      _loading = false;
-    });
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Debes completar todos los campos');
+      return;
+    }
 
-    if (success) {
-      // Aquí puedes navegar a tu pantalla principal
-      // Ejemplo:
-      Navigator.pushReplacementNamed(context, '/main');
-    } else {
-      setState(() {
-        _error = "Credenciales incorrectas. Inténtalo de nuevo.";
-      });
+    setState(() => _isLoading = true);
+
+    try {
+      // Adaptado a tu AuthService actual
+      final loginDto = LoginDto(email: email, password: password);
+      final usuario = await _authService.login(loginDto, password);
+
+      if (usuario == null || usuario.token == null || usuario.token!.isEmpty) {
+        _showError('Email o contraseña inválida');
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Guardamos token localmente
+      await _authService.saveToken(usuario.token);
+
+      // Navegar según rol
+      switch (usuario.rol) {
+        case 'Usuario':
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const UserHomeScreen()),
+          );
+          break;
+        case 'Staff':
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const StaffScreen()),
+          );
+          break;
+        case 'Administrador':
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminBolichesScreen()),
+          );
+          break;
+        default:
+          _showError('Rol no reconocido');
+      }
+    } catch (e) {
+      _showError('Error de login: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 600;
-
     return Scaffold(
-      backgroundColor: const Color(0xFF1A002B), // violeta oscuro base
+      backgroundColor: const Color(0xFF100018),
       body: Center(
-        child: Container(
-          width: isWide ? 400 : double.infinity,
-          margin: const EdgeInsets.all(24),
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2D014F).withOpacity(0.9),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.purpleAccent.withOpacity(0.6),
-                blurRadius: 20,
-                spreadRadius: 3,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'DoorPass',
+                style: GoogleFonts.orbitron(
+                  color: Colors.purpleAccent,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ],
-          ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ShaderMask(
-                  shaderCallback:
-                      (bounds) => const LinearGradient(
-                        colors: [Colors.purpleAccent, Colors.blueAccent],
-                      ).createShader(bounds),
-                  child: const Text(
-                    'Party Login 🎉',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+              const SizedBox(height: 40),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Email',
+                  hintStyle: const TextStyle(color: Colors.purpleAccent),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
                   ),
                 ),
-                const SizedBox(height: 32),
-                TextFormField(
-                  controller: _usernameCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Usuario',
-                    labelStyle: const TextStyle(color: Colors.purpleAccent),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.purpleAccent),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.blueAccent),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.email,
-                      color: Colors.purpleAccent,
-                    ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Contraseña',
+                  hintStyle: const TextStyle(color: Colors.purpleAccent),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.1),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
                   ),
-                  validator:
-                      (value) => value!.isEmpty ? 'Ingrese su correo' : null,
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordCtrl,
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    labelStyle: const TextStyle(color: Colors.purpleAccent),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.purpleAccent),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.blueAccent),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.lock,
-                      color: Colors.purpleAccent,
-                    ),
-                  ),
-                  validator:
-                      (value) =>
-                          value!.isEmpty ? 'Ingrese su contraseña' : null,
-                ),
-                const SizedBox(height: 24),
-                if (_error != null)
-                  Text(
-                    _error!,
-                    style: const TextStyle(color: Colors.redAccent),
-                  ),
-                const SizedBox(height: 8),
-                _loading
-                    ? const CircularProgressIndicator(
-                      color: Colors.purpleAccent,
-                    )
-                    : ElevatedButton(
+              ),
+              const SizedBox(height: 30),
+
+              // ... todo tu código anterior permanece igual hasta el ElevatedButton de login ...
+              _isLoading
+                  ? const CircularProgressIndicator(color: Colors.purpleAccent)
+                  : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
                       onPressed: _login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.purpleAccent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 80,
-                          vertical: 16,
-                        ),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        shadowColor: Colors.purpleAccent.withOpacity(0.6),
-                        elevation: 10,
                       ),
-                      child: const Text(
-                        'Ingresar',
-                        style: TextStyle(fontSize: 18),
+                      child: Text(
+                        'Iniciar sesión',
+                        style: GoogleFonts.orbitron(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    '¿No tienes cuenta? Regístrate',
-                    style: TextStyle(color: Colors.purpleAccent),
                   ),
+
+              const SizedBox(height: 16),
+
+              // 🔹 Botón de registro
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  );
+                },
+                child: const Text(
+                  '¿No tienes cuenta? Regístrate',
+                  style: TextStyle(color: Colors.purpleAccent),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
