@@ -56,7 +56,10 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
             icon: const Icon(Icons.logout, color: Colors.white),
             tooltip: 'Cerrar sesión',
             onPressed: () {
-              
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
             },
           ),
         ],
