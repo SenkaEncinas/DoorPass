@@ -24,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
+        content: Text(message, style: GoogleFonts.orbitron(color: Colors.white)),
         backgroundColor: Colors.red,
       ),
     );
@@ -42,7 +42,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Adaptado a tu AuthService actual
       final loginDto = LoginDto(email: email, password: password);
       final usuario = await _authService.login(loginDto, password);
 
@@ -52,28 +51,17 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // Guardamos token localmente
       await _authService.saveToken(usuario.token);
 
-      // Navegar según rol
       switch (usuario.rol) {
         case 'Usuario':
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const UserHomeScreen()),
-          );
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const UserHomeScreen()));
           break;
         case 'Staff':
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const StaffScreen()),
-          );
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StaffScreen()));
           break;
         case 'Administrador':
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const AdminBolichesScreen()),
-          );
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminBolichesScreen()));
           break;
         default:
           _showError('Rol no reconocido');
@@ -87,6 +75,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final inputDecoration = InputDecoration(
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.1),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide.none,
+      ),
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFF100018),
       body: Center(
@@ -104,76 +101,63 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 40),
+
+              // Email
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
+                style: GoogleFonts.orbitron(color: Colors.white),
+                decoration: inputDecoration.copyWith(
                   hintText: 'Email',
-                  hintStyle: const TextStyle(color: Colors.purpleAccent),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
+                  hintStyle: GoogleFonts.orbitron(color: Colors.purpleAccent),
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Password
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
+                style: GoogleFonts.orbitron(color: Colors.white),
+                decoration: inputDecoration.copyWith(
                   hintText: 'Contraseña',
-                  hintStyle: const TextStyle(color: Colors.purpleAccent),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
+                  hintStyle: GoogleFonts.orbitron(color: Colors.purpleAccent),
                 ),
               ),
               const SizedBox(height: 30),
 
-              // ... todo tu código anterior permanece igual hasta el ElevatedButton de login ...
+              // Botón de login
               _isLoading
                   ? const CircularProgressIndicator(color: Colors.purpleAccent)
                   : SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purpleAccent,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purpleAccent,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'Iniciar sesión',
-                        style: GoogleFonts.orbitron(
-                          fontWeight: FontWeight.bold,
+                        child: Text(
+                          'Iniciar sesión',
+                          style: GoogleFonts.orbitron(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
-                  ),
 
               const SizedBox(height: 16),
 
-              // 🔹 Botón de registro
+              // Botón de registro
               TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
                 },
-                child: const Text(
+                child: Text(
                   '¿No tienes cuenta? Regístrate',
-                  style: TextStyle(color: Colors.purpleAccent),
+                  style: GoogleFonts.orbitron(color: Colors.purpleAccent),
                 ),
               ),
             ],

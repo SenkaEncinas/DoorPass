@@ -40,16 +40,13 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     }
   }
 
-  // Función que maneja selección de boliche
   void _seleccionarBoliche(DetalleBolicheSimpleDto bolicheSimple, bool isWide) async {
     final detalle = await _productsService.getBolicheDetalle(bolicheSimple.id);
     if (detalle == null) return;
 
     if (isWide) {
-      // Pantalla ancha: mostrar al lado derecho
       setState(() => _seleccionado = detalle);
     } else {
-      // Pantalla estrecha: mostrar modal
       _mostrarDetalleModal(detalle);
     }
   }
@@ -62,25 +59,25 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.8,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (_, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.all(16),
-              child: _detalleContenido(detalle),
-            );
-          },
-        );
-      },
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.8,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(16),
+          child: _detalleContenido(detalle),
+        ),
+      ),
     );
   }
 
   Widget _detalleContenido(DetalleBolicheDto detalle) {
+    final textStyleTitulo = GoogleFonts.orbitron(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold);
+    final textStyleNormal = GoogleFonts.orbitron(color: Colors.purpleAccent);
+    final textStyleNombre = GoogleFonts.orbitron(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -96,98 +93,45 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
           ),
         const SizedBox(height: 16),
-        Text(
-          detalle.nombre,
-          style: GoogleFonts.orbitron(
-            color: Colors.white,
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        Text(detalle.nombre, style: textStyleNombre),
         const SizedBox(height: 8),
-        Text(
-          detalle.direccion ?? '',
-          style: GoogleFonts.orbitron(
-            color: Colors.purpleAccent,
-            fontSize: 16,
-          ),
-        ),
+        Text(detalle.direccion ?? '', style: textStyleNormal),
         const SizedBox(height: 16),
 
-        // Manillas
         if (detalle.manillas.isNotEmpty) ...[
-          const Text(
-            'Manillas:',
-            style: TextStyle(
-                color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          Text('Manillas:', style: textStyleTitulo),
           const SizedBox(height: 6),
-          ...detalle.manillas.map(
-            (m) => Text(
-              '${m.nombre}: Bs. ${m.precio}',
-              style: GoogleFonts.orbitron(color: Colors.purpleAccent),
-            ),
-          ),
+          ...detalle.manillas.map((m) => Text('${m.nombre}: Bs. ${m.precio}', style: textStyleNormal)),
           const SizedBox(height: 16),
         ],
 
-        // Mesas
         if (detalle.mesas.isNotEmpty) ...[
-          const Text(
-            'Mesas:',
-            style: TextStyle(
-                color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          Text('Mesas:', style: textStyleTitulo),
           const SizedBox(height: 6),
-          ...detalle.mesas.map(
-            (m) => Text(
-              '${m.nombreONumero}: Bs. ${m.precioReserva}',
-              style: GoogleFonts.orbitron(color: Colors.purpleAccent),
-            ),
-          ),
+          ...detalle.mesas.map((m) => Text('${m.nombreONumero}: Bs. ${m.precioReserva}', style: textStyleNormal)),
           const SizedBox(height: 16),
         ],
 
-        // Combos
         if (detalle.combos.isNotEmpty) ...[
-          const Text(
-            'Combos:',
-            style: TextStyle(
-                color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          Text('Combos:', style: textStyleTitulo),
           const SizedBox(height: 6),
           ...detalle.combos.map(
             (c) => Card(
               color: const Color(0xFF3A0055),
               margin: const EdgeInsets.symmetric(vertical: 4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      c.nombre,
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
+                    Text(c.nombre, style: textStyleNombre.copyWith(fontSize: 18)),
                     if (c.descripcion != null && c.descripcion!.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          c.descripcion!,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
+                        child: Text(c.descripcion!, style: textStyleNormal.copyWith(color: Colors.white70, fontStyle: FontStyle.italic)),
                       ),
-                    Text(
-                      'Precio: Bs. ${c.precio}',
-                      style: const TextStyle(color: Colors.purpleAccent),
-                    ),
+                    Text('Precio: Bs. ${c.precio}', style: textStyleNormal),
                   ],
                 ),
               ),
@@ -197,26 +141,29 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         ],
 
         Center(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ComprasScreen(
-                    bolicheId: detalle.id,
-                    bolicheNombre: detalle.nombre,
-                  ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purpleAccent,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFF7C4DFF), Color(0xFFE040FB)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text('Comprar 🎟️'),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ComprasScreen(bolicheId: detalle.id, bolicheNombre: detalle.nombre),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                child: Text('Comprar 🎟️', style: textStyleNombre.copyWith(fontSize: 18)),
+              ),
+            ),
           ),
         ),
+
         const SizedBox(height: 20),
       ],
     );
@@ -233,10 +180,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         title: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Colors.deepPurpleAccent.withOpacity(0.6),
-                Colors.purpleAccent.withOpacity(0.6),
-              ],
+              colors: [const Color(0xFF7C4DFF).withOpacity(0.6), const Color(0xFFE040FB).withOpacity(0.6)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -248,9 +192,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               hintText: 'Buscar boliche...',
-              hintStyle: GoogleFonts.orbitron(
-                color: Colors.purpleAccent.shade100,
-              ),
+              hintStyle: GoogleFonts.orbitron(color: Colors.purpleAccent.shade100),
               prefixIcon: const Icon(Icons.search, color: Colors.purpleAccent),
               border: InputBorder.none,
             ),
@@ -262,39 +204,22 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             padding: const EdgeInsets.only(right: 12.0),
             child: TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const HistorialComprasScreen(),
-                  ),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const HistorialComprasScreen()));
               },
-              child: Text(
-                "HISTORIAL DE COMPRAS",
-                style: GoogleFonts.orbitron(
-                  color: Colors.purpleAccent,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Text("HISTORIAL DE COMPRAS", style: GoogleFonts.orbitron(color: Colors.purpleAccent, fontSize: 13, fontWeight: FontWeight.bold)),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             tooltip: 'Cerrar sesión',
             onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
             },
           ),
         ],
       ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.purpleAccent),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.purpleAccent))
           : isWide
               ? Row(
                   children: [
@@ -302,20 +227,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     Expanded(
                       flex: 3,
                       child: _seleccionado == null
-                          ? Center(
-                              child: Text(
-                                'Selecciona un boliche 🎉',
-                                style: GoogleFonts.orbitron(
-                                  color: Colors.purpleAccent,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            )
-                          : SingleChildScrollView(
-                              padding: const EdgeInsets.all(16),
-                              child: _detalleContenido(_seleccionado!),
-                            ),
+                          ? Center(child: Text('Selecciona un boliche 🎉', style: GoogleFonts.orbitron(color: Colors.purpleAccent, fontSize: 22, fontWeight: FontWeight.bold)))
+                          : SingleChildScrollView(padding: const EdgeInsets.all(16), child: _detalleContenido(_seleccionado!)),
                     ),
                   ],
                 )
@@ -330,30 +243,30 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         itemCount: boliches.length,
         itemBuilder: (_, index) {
           final b = boliches[index];
-          if (!b.nombre.toLowerCase().contains(
-            _searchController.text.toLowerCase(),
-          )) return const SizedBox.shrink();
+          if (!b.nombre.toLowerCase().contains(_searchController.text.toLowerCase())) return const SizedBox.shrink();
 
           return Card(
             color: const Color(0xFF2D014F).withOpacity(0.85),
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: ListTile(
-              title: Text(
-                b.nombre,
-                style: GoogleFonts.orbitron(color: Colors.white),
-              ),
-              subtitle: Text(
-                b.direccion,
-                style: GoogleFonts.orbitron(color: Colors.purpleAccent),
-              ),
+              title: Text(b.nombre, style: GoogleFonts.orbitron(color: Colors.white)),
+              subtitle: Text(b.direccion, style: GoogleFonts.orbitron(color: Colors.purpleAccent)),
               trailing: isWide
                   ? null
-                  : ElevatedButton(
-                      onPressed: () => _seleccionarBoliche(b, isWide),
-                      child: const Text('Ver más'),
+                  : Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFF7C4DFF), Color(0xFFE040FB)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => _seleccionarBoliche(b, isWide),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          child: Text('Ver más', style: GoogleFonts.orbitron(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
                     ),
               onTap: () => _seleccionarBoliche(b, isWide),
             ),

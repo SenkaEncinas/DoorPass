@@ -154,66 +154,83 @@ class _ComprasScreenState extends State<ComprasScreen> {
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // MANILLAS
+                  // ===== MANILLAS =====
                   const Text(
                     'Manillas',
                     style: TextStyle(color: Colors.white, fontSize: 22),
                   ),
                   const SizedBox(height: 10),
-                  ...manillas.map((m) => _itemCantidad(
-                        nombre: m.nombre,
-                        precio: m.precio,
-                        cantidad: carritoManillas[m.id]!,
-                        onAdd: () {
-                          setState(() =>
-                              carritoManillas[m.id] = carritoManillas[m.id]! + 1);
-                        },
-                        onRemove: () {
-                          if (carritoManillas[m.id]! > 0) {
-                            setState(() =>
-                                carritoManillas[m.id] =
-                                    carritoManillas[m.id]! - 1);
-                          }
-                        },
-                      )),
-                  const SizedBox(height: 30),
-
-                  // MESAS
-                  if (mesas.isNotEmpty) ...[
-                    const Text(
-                      'Mesas',
-                      style: TextStyle(color: Colors.white, fontSize: 22),
-                    ),
-                    const SizedBox(height: 10),
-                    ...mesas.map(
-                      (mesa) => CheckboxListTile(
-                        title: Text(
-                          '${mesa.nombreONumero} - Bs. ${mesa.precioReserva}',
-                          style: const TextStyle(color: Colors.white),
+                  manillas.isEmpty
+                      ? const Text(
+                          'OUT OF STOCK',
+                          style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                        )
+                      : Column(
+                          children: manillas.map((m) => _itemCantidad(
+                                nombre: m.nombre,
+                                precio: m.precio,
+                                cantidad: carritoManillas[m.id]!,
+                                onAdd: () {
+                                  setState(() =>
+                                      carritoManillas[m.id] = carritoManillas[m.id]! + 1);
+                                },
+                                onRemove: () {
+                                  if (carritoManillas[m.id]! > 0) {
+                                    setState(() => carritoManillas[m.id] =
+                                        carritoManillas[m.id]! - 1);
+                                  }
+                                },
+                              )).toList(),
                         ),
-                        value: mesasSeleccionadas[mesa.id],
-                        onChanged: (v) {
-                          setState(() {
-                            mesasSeleccionadas[mesa.id] = v ?? false;
-                          });
-                        },
-                        activeColor: Colors.purpleAccent,
-                        checkColor: Colors.white,
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 30),
 
-                  // COMBOS - sección mejorada
-                  if (combos.isNotEmpty) ...[
-                    const Text(
-                      'Combos',
-                      style: TextStyle(color: Colors.white, fontSize: 22),
-                    ),
-                    const SizedBox(height: 10),
-                    ...combos.map((c) => _comboCard(c)),
-                  ],
+                  // ===== MESAS =====
+                  const Text(
+                    'Mesas',
+                    style: TextStyle(color: Colors.white, fontSize: 22),
+                  ),
+                  const SizedBox(height: 10),
+                  mesas.isEmpty
+                      ? const Text(
+                          'OUT OF STOCK',
+                          style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                        )
+                      : Column(
+                          children: mesas.map(
+                            (mesa) => CheckboxListTile(
+                              title: Text(
+                                '${mesa.nombreONumero} - Bs. ${mesa.precioReserva}',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              value: mesasSeleccionadas[mesa.id],
+                              onChanged: (v) {
+                                setState(() {
+                                  mesasSeleccionadas[mesa.id] = v ?? false;
+                                });
+                              },
+                              activeColor: Colors.purpleAccent,
+                              checkColor: Colors.white,
+                            ),
+                          ).toList(),
+                        ),
+                  const SizedBox(height: 30),
+
+                  // ===== COMBOS =====
+                  const Text(
+                    'Combos',
+                    style: TextStyle(color: Colors.white, fontSize: 22),
+                  ),
+                  const SizedBox(height: 10),
+                  combos.isEmpty
+                      ? const Text(
+                          'OUT OF STOCK',
+                          style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                        )
+                      : Column(
+                          children: combos.map((c) => _comboCard(c)).toList(),
+                        ),
 
                   const SizedBox(height: 40),
 
@@ -223,16 +240,18 @@ class _ComprasScreenState extends State<ComprasScreen> {
                   ),
                   const SizedBox(height: 15),
 
-                  ElevatedButton(
-                    onPressed: totalItems == 0 ? null : _comprar,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purpleAccent,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 70, vertical: 18),
-                    ),
-                    child: const Text(
-                      'Comprar',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: totalItems == 0 ? null : _comprar,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purpleAccent,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 70, vertical: 18),
+                      ),
+                      child: const Text(
+                        'Comprar',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
                     ),
                   ),
                 ],
@@ -242,7 +261,6 @@ class _ComprasScreenState extends State<ComprasScreen> {
   }
 
   // ====== Widgets Reutilizables ======
-
   Widget _itemCantidad({
     required String nombre,
     required double precio,
@@ -280,7 +298,7 @@ class _ComprasScreenState extends State<ComprasScreen> {
     );
   }
 
-  // ====== Nuevo Widget para combos estético ======
+  // ====== Widget para combos estético ======
   Widget _comboCard(DetalleComboDto c) {
     return Card(
       color: const Color(0xFF2D014F),
@@ -293,7 +311,7 @@ class _ComprasScreenState extends State<ComprasScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Imagen
-            if (c.imagenUrl != null && c.imagenUrl.isNotEmpty)
+            if (c.imagenUrl != null && c.imagenUrl!.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
