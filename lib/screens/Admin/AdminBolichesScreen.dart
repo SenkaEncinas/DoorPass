@@ -41,13 +41,21 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Imagen proporcional entre 30 y 60 px
+    final imageSize = (screenWidth * 0.15).clamp(30.0, 60.0);
+
     return Scaffold(
       backgroundColor: const Color(0xFF100018),
       appBar: AppBar(
         backgroundColor: const Color(0xFF6A0DAD),
         title: Text(
           'Administrador de Boliches',
-          style: GoogleFonts.orbitron(color: Colors.white, fontWeight: FontWeight.bold),
+          style: GoogleFonts.orbitron(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         actions: [
@@ -69,7 +77,8 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Colors.purpleAccent))
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.purpleAccent))
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: boliches.length,
@@ -90,9 +99,18 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                             borderRadius: BorderRadius.circular(12),
                             child: Image.network(
                               boliche.imagenUrl!,
-                              width: 60,
-                              height: 60,
+                              width: imageSize,
+                              height: imageSize,
                               fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: imageSize,
+                                height: imageSize,
+                                color: Colors.grey[800],
+                                child: const Icon(
+                                  Icons.image_not_supported,
+                                  color: Colors.white70,
+                                ),
+                              ),
                             ),
                           )
                         : null,
@@ -117,7 +135,8 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => EdicionAdminBoliche(boliche: boliche),
+                                builder: (_) =>
+                                    EdicionAdminBoliche(boliche: boliche),
                               ),
                             );
                             _cargarBoliches();
@@ -132,7 +151,9 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                                 backgroundColor: const Color(0xFF2D014F),
                                 title: Text(
                                   'Confirmar eliminación',
-                                  style: GoogleFonts.orbitron(color: Colors.white, fontWeight: FontWeight.bold),
+                                  style: GoogleFonts.orbitron(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 content: Text(
                                   '¿Estás seguro de eliminar "${boliche.nombre}"?',
@@ -140,20 +161,24 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
                                     child: Text(
                                       'Cancelar',
-                                      style: GoogleFonts.orbitron(color: Colors.white70),
+                                      style: GoogleFonts.orbitron(
+                                          color: Colors.white70),
                                     ),
                                   ),
                                   ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.redAccent,
                                     ),
-                                    onPressed: () => Navigator.pop(context, true),
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
                                     child: Text(
                                       'Eliminar',
-                                      style: GoogleFonts.orbitron(color: Colors.white),
+                                      style:
+                                          GoogleFonts.orbitron(color: Colors.white),
                                     ),
                                   ),
                                 ],
@@ -161,7 +186,8 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                             );
 
                             if (confirm == true) {
-                              final ok = await _adminService.eliminarBoliche(boliche.id);
+                              final ok =
+                                  await _adminService.eliminarBoliche(boliche.id);
                               if (ok) {
                                 _cargarBoliches();
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -206,7 +232,8 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
         backgroundColor: const Color(0xFF2D014F),
         title: Text(
           'Crear nuevo boliche',
-          style: GoogleFonts.orbitron(color: Colors.white, fontWeight: FontWeight.bold),
+          style:
+              GoogleFonts.orbitron(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         content: SingleChildScrollView(
           child: Column(
@@ -241,7 +268,8 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                   nombre: nombreController.text,
                   direccion: direccionController.text,
                   descripcion: descripcionController.text,
-                  imagenUrl: imagenController.text.isNotEmpty ? imagenController.text : null,
+                  imagenUrl:
+                      imagenController.text.isNotEmpty ? imagenController.text : null,
                 ),
               );
 
@@ -278,7 +306,8 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
     );
   }
 
-  Widget _campoTexto(String label, TextEditingController controller, {bool isNumber = false}) {
+  Widget _campoTexto(String label, TextEditingController controller,
+      {bool isNumber = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: TextField(
