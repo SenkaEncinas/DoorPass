@@ -1,7 +1,4 @@
-import 'package:doorpass/screens/Admin/AdminBolichesScreen.dart';
 import 'package:doorpass/screens/LoginScreen.dart';
-import 'package:doorpass/screens/Staff/StaffScreen.dart';
-import 'package:doorpass/screens/User/UserHomeScreen.dart';
 import 'package:flutter/material.dart';
 
 void main() {

@@ -1,15 +1,10 @@
 // lib/screens/Admin/EdicionAdminBoliche.dart
-import 'package:doorpass/models/Entities/Combo.dart';
 import 'package:doorpass/models/Productos/DetalleComboDto.dart';
 import 'package:doorpass/models/Productos/DetalleManillaTipoDto.dart';
 import 'package:doorpass/models/Productos/DetalleMesaDto.dart';
 import 'package:flutter/material.dart';
 import 'package:doorpass/models/Productos/DetalleBolicheDto.dart';
 import 'package:doorpass/models/Productos/DetalleBolichesSimpleDto.dart';
-import 'package:doorpass/models/admin/CrearManillaTipoDto.dart';
-import 'package:doorpass/models/admin/CrearMesaDto.dart';
-import 'package:doorpass/models/admin/CrearStaffDto.dart';
-import 'package:doorpass/models/admin/CrearComboDto.dart';
 import 'package:doorpass/models/admin/CrearBolicheDto.dart';
 import 'package:doorpass/services/admin_service.dart';
 import 'package:doorpass/services/productos_service.dart';

@@ -9,8 +9,6 @@ import 'package:doorpass/models/admin/CrearComboDto.dart';
 import 'package:doorpass/models/admin/CrearManillaTipoDto.dart';
 import 'package:doorpass/models/admin/CrearMesaDto.dart';
 import 'package:doorpass/models/admin/CrearStaffDto.dart';
-import 'package:doorpass/models/admin/UpdateBolicheDto.dart';
-import 'package:doorpass/models/admin/UpdateComboDto.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
