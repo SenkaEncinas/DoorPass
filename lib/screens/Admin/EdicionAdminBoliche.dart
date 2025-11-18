@@ -10,6 +10,7 @@ import 'package:doorpass/models/admin/CrearManillaTipoDto.dart';
 import 'package:doorpass/models/admin/CrearMesaDto.dart';
 import 'package:doorpass/models/admin/CrearStaffDto.dart';
 import 'package:doorpass/models/admin/CrearComboDto.dart';
+import 'package:doorpass/models/admin/CrearBolicheDto.dart';
 import 'package:doorpass/services/admin_service.dart';
 import 'package:doorpass/services/productos_service.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -42,6 +43,76 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
       _detalle = detalle;
       _loading = false;
     });
+  }
+
+  // ===================== Editar parámetros del Boliche =====================
+  void _editarBoliche() {
+    final nombreController = TextEditingController(text: _detalle!.nombre);
+    final direccionController = TextEditingController(text: _detalle!.direccion ?? '');
+    final descripcionController = TextEditingController(text: _detalle!.descripcion ?? '');
+    final imagenController = TextEditingController(text: _detalle!.imagenUrl ?? '');
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Editar Boliche', style: TextStyle(color: Colors.white)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _campoTexto('Nombre', nombreController),
+              _campoTexto('Dirección', direccionController),
+              _campoTexto('Descripción', descripcionController),
+              _campoTexto('URL de Imagen', imagenController),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final nombre = nombreController.text.trim();
+              final direccion = direccionController.text.trim();
+              final descripcion = descripcionController.text.trim();
+              final imagen = imagenController.text.trim();
+
+              if (nombre.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('El nombre es obligatorio')),
+                );
+                return;
+              }
+
+              final dto = CrearBolicheDto(
+                nombre: nombre,
+                direccion: direccion,
+                descripcion: descripcion.isNotEmpty ? descripcion : '',
+                imagenUrl: imagen.isNotEmpty ? imagen : null,
+              );
+
+              final success = await _adminService.actualizarBoliche(_detalle!.id, dto);
+
+              if (success) {
+                _cargarDetalle();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Boliche actualizado correctamente')),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Error al actualizar el boliche')),
+                );
+              }
+            },
+            child: const Text('Guardar cambios'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -82,6 +153,14 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
                           color: Colors.purpleAccent,
                           fontSize: 16,
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: _editarBoliche,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF9D00FF),
+                        ),
+                        child: const Text('Editar Boliche'),
                       ),
                       const SizedBox(height: 20),
                       _seccionManillas(),
@@ -438,229 +517,145 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
   }
 
   // ===================== Sección Combos =====================
-// ===================== Sección Combos =====================
-Widget _seccionCombos() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Combos:',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          ElevatedButton(
-            onPressed: _crearCombo,
-            child: const Text('Nuevo Combo'),
-          ),
-        ],
-      ),
-      const SizedBox(height: 8),
-      ...?_detalle?.combos.map(
-        (c) => Row(
+  Widget _seccionCombos() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '${c.nombre}: Bs. ${c.precio}',
-              style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+            const Text(
+              'Combos:',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            Row(
-              children: [
-                // ===== BOTÓN EDITAR =====
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.white70),
-                  onPressed: () => _editarCombo(c),
-                ),
-                // ===== BOTÓN ELIMINAR =====
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.redAccent),
-                  onPressed: () async {
-                    final ok = await _adminService.deleteCombo(c.id);
-                    if (ok) _cargarDetalle();
-                  },
-                ),
-              ],
+            ElevatedButton(
+              onPressed: _crearCombo,
+              child: const Text('Nuevo Combo'),
             ),
           ],
         ),
-      ),
-      if ((_detalle?.combos.isEmpty ?? true))
-        const Text(
-          'No hay combos disponibles',
-          style: TextStyle(color: Colors.purpleAccent),
-        ),
-    ],
-  );
-}
-// ===================== Editar Combo =====================
-void _editarCombo(DetalleComboDto c) {
-  final nombreController = TextEditingController(text: c.nombre);
-  final precioController = TextEditingController(text: c.precio.toString());
-  final descripcionController = TextEditingController(text: c.descripcion ?? '');
-  final imagenController = TextEditingController(text: c.imagenUrl ?? '');
-
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      backgroundColor: const Color(0xFF1A0026),
-      title: const Text(
-        "Editar Combo",
-        style: TextStyle(color: Colors.white),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _campoTexto("Nombre", nombreController),
-            _campoTexto("Precio", precioController, isNumber: true),
-            _campoTexto("Descripción", descripcionController),
-            _campoTexto("URL de Imagen", imagenController),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancelar", style: TextStyle(color: Colors.white70)),
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            final nombre = nombreController.text.trim();
-            final precio = double.tryParse(precioController.text) ?? 0;
-
-            if (nombre.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('El nombre es obligatorio')),
-              );
-              return;
-            }
-
-            if (precio <= 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('El precio debe ser mayor a 0')),
-              );
-              return;
-            }
-
-            final dto = CrearComboDto(
-              nombre: nombre,
-              precio: precio,
-              descripcion: descripcionController.text.isNotEmpty
-                  ? descripcionController.text
-                  : null,
-              imagenUrl: imagenController.text.isNotEmpty
-                  ? imagenController.text
-                  : null,
-            );
-
-            final ok = await _adminService.updateCombo(c.id, dto);
-
-            if (ok) {
-              _cargarDetalle(); // recarga los datos
-              Navigator.pop(context); // cierra el diálogo
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Error al actualizar el combo')),
-              );
-            }
-          },
-          child: const Text("Guardar"),
+        const SizedBox(height: 8),
+        ...?_detalle?.combos.map(
+          (c) => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${c.nombre}: Bs. ${c.precio}', style: GoogleFonts.orbitron(color: Colors.purpleAccent)),
+              Row(
+                children: [
+                  IconButton(onPressed: () => _editarCombo(c), icon: const Icon(Icons.edit, color: Colors.white70)),
+                  IconButton(onPressed: () => _eliminarCombo(c.id), icon: const Icon(Icons.delete, color: Colors.redAccent)),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
-    ),
-  );
-}
-void _crearCombo() {
-  final nombreController = TextEditingController();
-  final precioController = TextEditingController();
-  final descripcionController = TextEditingController();
-  final imagenController = TextEditingController();
+    );
+  }
 
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      backgroundColor: const Color(0xFF1A0026),
-      title: const Text(
-        'Crear nuevo combo',
-        style: TextStyle(color: Colors.white),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
+  void _crearCombo() {
+    final nombreController = TextEditingController();
+    final precioController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Crear nuevo Combo', style: TextStyle(color: Colors.white)),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _campoTexto('Nombre', nombreController),
             _campoTexto('Precio', precioController, isNumber: true),
-            _campoTexto('Descripción', descripcionController),
-            _campoTexto('URL de Imagen', imagenController),
           ],
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cancelar',
-            style: TextStyle(color: Colors.white70),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(
+            onPressed: () async {
+              final dto = CrearComboDto(
+                nombre: nombreController.text,
+                precio: double.tryParse(precioController.text) ?? 0,
+              );
+              final nuevo = await _adminService.crearCombo(_detalle!.id, dto);
+              if (nuevo != null) {
+                _cargarDetalle();
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Guardar'),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _editarCombo(DetalleComboDto combo) {
+    final nombreController = TextEditingController(text: combo.nombre);
+    final precioController = TextEditingController(text: combo.precio.toString());
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Editar Combo', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _campoTexto('Nombre', nombreController),
+            _campoTexto('Precio', precioController, isNumber: true),
+          ],
         ),
-        ElevatedButton(
-          onPressed: () async {
-            final nombre = nombreController.text.trim();
-            final precio = double.tryParse(precioController.text) ?? 0;
-
-            if (nombre.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('El nombre es obligatorio')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(
+            onPressed: () async {
+              final dto = CrearComboDto(
+                nombre: nombreController.text,
+                precio: double.tryParse(precioController.text) ?? 0,
               );
-              return;
-            }
+              final success = await _adminService.updateCombo(combo.id, dto);
+              if (success) {
+                _cargarDetalle();
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
 
-            if (precio <= 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('El precio debe ser mayor a 0')),
-              );
-              return;
-            }
+  void _eliminarCombo(int id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Eliminar Combo', style: TextStyle(color: Colors.white)),
+        content: const Text('¿Desea eliminar este combo?', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
 
-            final dto = CrearComboDto(
-              nombre: nombre,
-              precio: precio,
-              descripcion: descripcionController.text.isNotEmpty
-                  ? descripcionController.text
-                  : null,
-              imagenUrl: imagenController.text.isNotEmpty
-                  ? imagenController.text
-                  : null,
-            );
+    if (confirmed ?? false) {
+      final success = await _adminService.deleteCombo(id);
+      if (success) _cargarDetalle();
+    }
+  }
 
-            // Llamada al servicio para crear el combo
-            final nuevo = await _adminService.crearCombo(_detalle!.id, dto);
-
-            if (nuevo != null) {
-              _cargarDetalle(); // recarga los datos
-              Navigator.pop(context); // cierra el diálogo
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Error al crear el combo')),
-              );
-            }
-          },
-          child: const Text('Guardar'),
-        ),
-      ],
-    ),
-  );
-}
-  // ===================== Campo Texto =====================
+  // ===================== Campos de texto reutilizables =====================
   Widget _campoTexto(String label, TextEditingController controller,
       {bool isNumber = false, bool isPassword = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
         controller: controller,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
@@ -668,16 +663,15 @@ void _crearCombo() {
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.purpleAccent),
+          labelStyle: const TextStyle(color: Colors.white70),
           enabledBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.purpleAccent),
           ),
           focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.purpleAccent, width: 2),
+            borderSide: BorderSide(color: Colors.white),
           ),
         ),
       ),
     );
   }
 }
-  

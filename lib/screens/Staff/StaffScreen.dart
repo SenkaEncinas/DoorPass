@@ -1,3 +1,4 @@
+import 'package:doorpass/screens/LoginScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:doorpass/services/staff_service.dart';
 import 'package:doorpass/models/Compras/DetalleCompraDto.dart';
@@ -45,14 +46,28 @@ class _StaffScreenState extends State<StaffScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0014),
-      appBar: AppBar(
-        title: const Text(
-          "Panel de Staff",
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: const Color(0xFF6A0DAD),
-        centerTitle: true,
-      ),
+appBar: AppBar(
+  title: const Text(
+    "Panel de Staff",
+    style: TextStyle(color: Colors.white),
+  ),
+  backgroundColor: const Color(0xFF6A0DAD),
+  centerTitle: true,
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.logout, color: Colors.white),
+      onPressed: () {
+        Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+      },
+      tooltip: 'Cerrar sesión',
+    ),
+  ],
+),
+
+
       body:
           loading
               ? const Center(
