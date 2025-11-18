@@ -2,6 +2,10 @@
 import 'package:doorpass/models/Productos/DetalleComboDto.dart';
 import 'package:doorpass/models/Productos/DetalleManillaTipoDto.dart';
 import 'package:doorpass/models/Productos/DetalleMesaDto.dart';
+import 'package:doorpass/models/admin/CrearComboDto.dart';
+import 'package:doorpass/models/admin/CrearManillaTipoDto.dart';
+import 'package:doorpass/models/admin/CrearMesaDto.dart';
+import 'package:doorpass/models/admin/CrearStaffDto.dart';
 import 'package:flutter/material.dart';
 import 'package:doorpass/models/Productos/DetalleBolicheDto.dart';
 import 'package:doorpass/models/Productos/DetalleBolichesSimpleDto.dart';
@@ -269,18 +273,441 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
     );
   }
 
-  // ===================== Métodos CRUD sin cambios =====================
-  void _crearManilla() {}
-  void _editarManilla(DetalleManillaTipoDto manilla) {}
-  void _eliminarManilla(int id) {}
+// ===================== MÉTODOS CRUD PARA MANILLAS =====================
+void _crearManilla() {
+  final nombre = TextEditingController();
+  final precio = TextEditingController();
+  final stock = TextEditingController();
 
-  void _crearMesa() {}
-  void _editarMesa(DetalleMesaDto mesa) {}
-  void _eliminarMesa(int id) {}
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A0026),
+      title: Text("Nueva Manilla", style: GoogleFonts.orbitron(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(children: [
+          _campoTexto("Nombre", nombre),
+          _campoTexto("Precio", precio, isNumber: true),
+          _campoTexto("Stock", stock, isNumber: true),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+        ElevatedButton(
+          onPressed: () async {
+            if (nombre.text.isEmpty || precio.text.isEmpty || stock.text.isEmpty) return;
 
-  void _crearStaff() {}
+            final dto = CrearManillaTipoDto(
+              nombre: nombre.text.trim(),
+              precio: double.parse(precio.text),
+              stock: int.parse(stock.text),
+            );
 
-  void _crearCombo() {}
-  void _editarCombo(DetalleComboDto combo) {}
-  void _eliminarCombo(int id) {}
+            final r = await _adminService.crearManilla(_detalle!.id, dto);
+            if (r != null) {
+              Navigator.pop(context);
+              _cargarDetalle();
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Manilla creada')));
+            }
+          },
+          child: const Text("Crear"),
+        ),
+      ],
+    ),
+  );
+}
+
+void _editarManilla(DetalleManillaTipoDto m) {
+  final nombre = TextEditingController(text: m.nombre);
+  final precio = TextEditingController(text: m.precio.toString());
+  final stock = TextEditingController(text: m.stock.toString());
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A0026),
+      title: Text("Editar Manilla", style: GoogleFonts.orbitron(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(children: [
+          _campoTexto("Nombre", nombre),
+          _campoTexto("Precio", precio, isNumber: true),
+          _campoTexto("Stock", stock, isNumber: true),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+        ElevatedButton(
+          onPressed: () async {
+            final dto = CrearManillaTipoDto(
+              nombre: nombre.text.trim(),
+              precio: double.parse(precio.text),
+              stock: int.parse(stock.text),
+            );
+
+            final ok = await _adminService.actualizarManilla(m.id, dto);
+            if (ok) {
+              Navigator.pop(context);
+              _cargarDetalle();
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Manilla actualizada")));
+            }
+          },
+          child: const Text("Guardar"),
+        ),
+      ],
+    ),
+  );
+}
+
+void _eliminarManilla(int id) async {
+  final ok = await _adminService.eliminarManilla(id);
+  if (ok) {
+    _cargarDetalle();
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Manilla eliminada")));
+  }
+}
+
+// ===================== MÉTODOS CRUD PARA MESAS =====================
+void _crearMesa() {
+  final nombre = TextEditingController();
+  final precio = TextEditingController();
+  final ubicacion = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A0026),
+      title: Text("Nueva Mesa", style: GoogleFonts.orbitron(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(children: [
+          _campoTexto("Nombre o Número", nombre),
+          _campoTexto("Precio de Reserva", precio, isNumber: true),
+          _campoTexto("Ubicación (opcional)", ubicacion),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+        ElevatedButton(
+          onPressed: () async {
+            final nombreText = nombre.text.trim();
+            final precioText = precio.text.trim();
+
+            if (nombreText.isEmpty || precioText.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Nombre y precio son obligatorios')),
+              );
+              return;
+            }
+
+            double? precioVal;
+            try {
+              precioVal = double.parse(precioText);
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Precio inválido')),
+              );
+              return;
+            }
+
+            final dto = CrearMesaDto(
+              nombreONumero: nombreText,
+              precioReserva: precioVal,
+              ubicacion: ubicacion.text.trim().isNotEmpty ? ubicacion.text.trim() : null,
+            );
+
+            final r = await _adminService.crearMesa(_detalle!.id, dto);
+            if (r != null) {
+              Navigator.pop(context);
+              _cargarDetalle();
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mesa creada')));
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al crear mesa')));
+            }
+          },
+          child: const Text("Crear"),
+        ),
+      ],
+    ),
+  );
+}
+
+void _editarMesa(DetalleMesaDto m) {
+  final nombre = TextEditingController(text: m.nombreONumero);
+  final precio = TextEditingController(text: m.precioReserva.toString());
+  final ubicacion = TextEditingController(text: m.ubicacion ?? '');
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A0026),
+      title: Text("Editar Mesa", style: GoogleFonts.orbitron(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(children: [
+          _campoTexto("Nombre o Número", nombre),
+          _campoTexto("Precio Reserva", precio, isNumber: true),
+          _campoTexto("Ubicación (opcional)", ubicacion),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+        ElevatedButton(
+          onPressed: () async {
+            final nombreText = nombre.text.trim();
+            final precioText = precio.text.trim();
+
+            if (nombreText.isEmpty || precioText.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Nombre y precio son obligatorios')),
+              );
+              return;
+            }
+
+            double? precioVal;
+            try {
+              precioVal = double.parse(precioText);
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Precio inválido')),
+              );
+              return;
+            }
+
+            final dto = CrearMesaDto(
+              nombreONumero: nombreText,
+              precioReserva: precioVal,
+              ubicacion: ubicacion.text.trim().isNotEmpty ? ubicacion.text.trim() : null,
+            );
+
+            final ok = await _adminService.actualizarMesa(m.id, dto);
+            if (ok) {
+              Navigator.pop(context);
+              _cargarDetalle();
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mesa actualizada")));
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al actualizar mesa")));
+            }
+          },
+          child: const Text("Guardar"),
+        ),
+      ],
+    ),
+  );
+}
+
+void _eliminarMesa(int id) async {
+  final ok = await _adminService.eliminarMesa(id);
+  if (ok) {
+    _cargarDetalle();
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mesa eliminada")));
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al eliminar mesa")));
+  }
+}
+
+// ===================== STAFF =====================
+void _crearStaff() {
+  final nombre = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A0026),
+      title: Text("Nuevo Staff", style: GoogleFonts.orbitron(color: Colors.white)),
+      content: SingleChildScrollView(
+      child : Column(children: [
+        _campoTexto("Nombre", nombre),
+        _campoTexto("Email", email),
+        _campoTexto("Contraseña", password, isPassword: true),
+      ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+        ElevatedButton(
+          onPressed: () async {
+            final dto = CrearStaffDto(
+              nombre: nombre.text.trim(),
+              email: email.text.trim(),
+              password: password.text.trim(),
+            );
+
+            final r = await _adminService.crearStaff(dto);
+            if (r != null) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Staff creado")));
+            }
+          },
+          child: const Text("Crear"),
+        ),
+      ],
+    ),
+  );
+}
+
+// ===================== MÉTODOS CRUD PARA COMBOS =====================
+void _crearCombo() {
+  final nombre = TextEditingController();
+  final descripcion = TextEditingController();
+  final precio = TextEditingController();
+  final imagenUrl = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A0026),
+      title: Text("Nuevo Combo",
+          style: GoogleFonts.orbitron(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            _campoTexto("Nombre", nombre),
+            _campoTexto("Descripción (opcional)", descripcion),
+            _campoTexto("Precio", precio, isNumber: true),
+            _campoTexto("Imagen URL (opcional)", imagenUrl),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancelar"),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if (nombre.text.trim().isEmpty || precio.text.trim().isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Nombre y precio son obligatorios")),
+              );
+              return;
+            }
+
+            double? precioVal;
+            try {
+              precioVal = double.parse(precio.text.trim());
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Precio inválido")),
+              );
+              return;
+            }
+
+            final dto = CrearComboDto(
+              nombre: nombre.text.trim(),
+              descripcion: descripcion.text.trim().isEmpty
+                  ? null
+                  : descripcion.text.trim(),
+              precio: precioVal,
+              imagenUrl: imagenUrl.text.trim().isEmpty
+                  ? null
+                  : imagenUrl.text.trim(),
+            );
+
+            final r = await _adminService.crearCombo(_detalle!.id, dto);
+
+            if (r != null) {
+              Navigator.pop(context);
+              _cargarDetalle();
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text("Combo creado")));
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Error al crear combo")));
+            }
+          },
+          child: const Text("Crear"),
+        ),
+      ],
+    ),
+  );
+}
+
+
+void _editarCombo(DetalleComboDto combo) {
+  final nombre = TextEditingController(text: combo.nombre);
+  final descripcion = TextEditingController(text: combo.descripcion ?? '');
+  final precio = TextEditingController(text: combo.precio.toString());
+  final imagenUrl = TextEditingController(text: combo.imagenUrl ?? '');
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A0026),
+      title: Text("Editar Combo",
+          style: GoogleFonts.orbitron(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            _campoTexto("Nombre", nombre),
+            _campoTexto("Descripción (opcional)", descripcion),
+            _campoTexto("Precio", precio, isNumber: true),
+            _campoTexto("Imagen URL (opcional)", imagenUrl),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancelar"),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if (nombre.text.trim().isEmpty || precio.text.trim().isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Nombre y precio son obligatorios")),
+              );
+              return;
+            }
+
+            double? precioVal;
+            try {
+              precioVal = double.parse(precio.text.trim());
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Precio inválido")),
+              );
+              return;
+            }
+
+            final dto = CrearComboDto(
+              nombre: nombre.text.trim(),
+              descripcion:
+                  descripcion.text.trim().isEmpty ? null : descripcion.text.trim(),
+              precio: precioVal,
+              imagenUrl:
+                  imagenUrl.text.trim().isEmpty ? null : imagenUrl.text.trim(),
+            );
+
+            final ok = await _adminService.updateCombo(combo.id, dto);
+
+            if (ok) {
+              Navigator.pop(context);
+              _cargarDetalle();
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text("Combo actualizado")));
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Error al actualizar combo")),
+              );
+            }
+          },
+          child: const Text("Guardar"),
+        ),
+      ],
+    ),
+  );
+}
+void _eliminarCombo(int id) async {
+  final ok = await _adminService.deleteCombo(id);
+
+  if (ok) {
+    _cargarDetalle();
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text("Combo eliminado")));
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Error al eliminar combo")),
+    );
+  }
+}
+
 }
