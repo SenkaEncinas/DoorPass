@@ -293,7 +293,7 @@ class _ComprasScreenState extends State<ComprasScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Imagen
-            if (c.imagenUrl != null && c.imagenUrl!.isNotEmpty)
+            if (c.imagenUrl != null && c.imagenUrl.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
