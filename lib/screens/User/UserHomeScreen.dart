@@ -20,7 +20,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   final ProductosService _productsService = ProductosService();
 
   List<DetalleBolicheSimpleDto> boliches = [];
-  DetalleBolicheDto? _seleccionado;
   bool _loading = true;
 
   @override
@@ -41,13 +40,179 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     }
   }
 
-  Future<void> _cargarDetalle(int bolicheId) async {
-    try {
-      final detalle = await _productsService.getBolicheDetalle(bolicheId);
-      if (detalle != null) setState(() => _seleccionado = detalle);
-    } catch (e) {
-      debugPrint('Error cargando detalle: $e');
-    }
+  // Función para mostrar detalle completo en modal
+  void _mostrarDetalleModal(DetalleBolicheSimpleDto bolicheSimple) async {
+    final detalle = await _productsService.getBolicheDetalle(bolicheSimple.id);
+    if (detalle == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF100018),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.8,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (_, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (detalle.imagenUrl != null && detalle.imagenUrl!.isNotEmpty)
+                    Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.network(
+                          detalle.imagenUrl!,
+                          height: 200,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Text(
+                    detalle.nombre,
+                    style: GoogleFonts.orbitron(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    detalle.direccion ?? '',
+                    style: GoogleFonts.orbitron(
+                      color: Colors.purpleAccent,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Manillas
+                  if (detalle.manillas.isNotEmpty) ...[
+                    const Text(
+                      'Manillas:',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    ...detalle.manillas.map(
+                      (m) => Text(
+                        '${m.nombre}: Bs. ${m.precio}',
+                        style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Mesas
+                  if (detalle.mesas.isNotEmpty) ...[
+                    const Text(
+                      'Mesas:',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    ...detalle.mesas.map(
+                      (m) => Text(
+                        '${m.nombreONumero}: Bs. ${m.precioReserva}',
+                        style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Combos
+                  if (detalle.combos.isNotEmpty) ...[
+                    const Text(
+                      'Combos:',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    ...detalle.combos.map(
+                      (c) => Card(
+                        color: const Color(0xFF3A0055),
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                c.nombre,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              if (c.descripcion != null && c.descripcion!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: Text(
+                                    c.descripcion!,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                              Text(
+                                'Precio: Bs. ${c.precio}',
+                                style: const TextStyle(color: Colors.purpleAccent),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ComprasScreen(
+                              bolicheId: detalle.id,
+                              bolicheNombre: detalle.nombre,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purpleAccent,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 14),
+                      ),
+                      child: const Text('Comprar 🎟️'),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -119,33 +284,29 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
           ),
         ],
       ),
-      body:
-          _loading
-              ? const Center(
-                child: CircularProgressIndicator(color: Colors.purpleAccent),
-              )
-              : isWide
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.purpleAccent),
+            )
+          : isWide
               ? Row(
-                children: [
-                  _buildListaBoliches(),
-                  Expanded(
-                    flex: 3,
-                    child:
-                        _seleccionado == null
-                            ? Center(
-                              child: Text(
-                                'Selecciona un boliche 🎉',
-                                style: GoogleFonts.orbitron(
-                                  color: Colors.purpleAccent,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            )
-                            : _buildDetalle(_seleccionado!),
-                  ),
-                ],
-              )
+                  children: [
+                    _buildListaBoliches(),
+                    Expanded(
+                      flex: 3,
+                      child: Center(
+                        child: Text(
+                          'Selecciona un boliche 🎉',
+                          style: GoogleFonts.orbitron(
+                            color: Colors.purpleAccent,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
               : _buildListaMovil(),
     );
   }
@@ -170,7 +331,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               b.direccion,
               style: GoogleFonts.orbitron(color: Colors.purpleAccent),
             ),
-            onTap: () => _cargarDetalle(b.id),
+            onTap: () => _mostrarDetalleModal(b),
           );
         },
       ),
@@ -202,121 +363,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               style: GoogleFonts.orbitron(color: Colors.purpleAccent),
             ),
             trailing: ElevatedButton(
-              onPressed: () => _cargarDetalle(b.id),
+              onPressed: () => _mostrarDetalleModal(b),
               child: const Text('Ver más'),
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildDetalle(DetalleBolicheDto boliche) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (boliche.imagenUrl != null && boliche.imagenUrl!.isNotEmpty)
-              Center(
-                child: Image.network(
-                  boliche.imagenUrl!,
-                  height: 200,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            const SizedBox(height: 16),
-            Text(
-              boliche.nombre,
-              style: GoogleFonts.orbitron(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              boliche.direccion ?? '',
-              style: GoogleFonts.orbitron(
-                color: Colors.purpleAccent,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Manillas
-            const Text(
-              'Manillas:',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            ...boliche.manillas.map(
-              (m) => Text(
-                '${m.nombre}: Bs. ${m.precio}',
-                style: GoogleFonts.orbitron(color: Colors.purpleAccent),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Mesas
-            const Text(
-              'Mesas:',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            ...boliche.mesas.map(
-              (m) => Text(
-                '${m.nombreONumero}: Bs. ${m.precioReserva}',
-                style: GoogleFonts.orbitron(color: Colors.purpleAccent),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Combos
-            if (boliche.combos.isNotEmpty) ...[
-              const Text(
-                'Combos:',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              ...boliche.combos.map(
-                (c) => Text(
-                  '${c.nombre}: Bs. ${c.precio}',
-                  style: GoogleFonts.orbitron(color: Colors.purpleAccent),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => ComprasScreen(
-                            bolicheId: boliche.id,
-                            bolicheNombre: boliche.nombre,
-                          ),
-                    ),
-                  );
-                },
-                child: const Text('Comprar 🎟️'),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
