@@ -4,10 +4,11 @@ import 'package:doorpass/models/Productos/DetalleMesaDto.dart';
 import 'package:doorpass/models/Productos/DetalleComboDto.dart';
 
 import 'package:doorpass/models/Compras/ItemManillaDto.dart';
-import 'package:doorpass/models/Compras/CrearCompraManilla.dart';
-import 'package:doorpass/models/Compras/ReservarMesaDto.dart';
 import 'package:doorpass/models/Compras/ItemComboDto.dart';
+
+import 'package:doorpass/models/Compras/CrearCompraManilla.dart';
 import 'package:doorpass/models/Compras/CrearCompraCombosDto.dart';
+import 'package:doorpass/models/Compras/ReservarMesaDto.dart';
 
 import 'package:doorpass/services/productos_service.dart';
 import 'package:doorpass/services/compras_service.dart';
@@ -32,14 +33,16 @@ class _ComprasScreenState extends State<ComprasScreen> {
 
   bool loading = true;
 
-  // Datos cargados del boliche
+  // MANILLAS
   List<DetalleManillaTipoDto> manillas = [];
-  List<DetalleMesaDto> mesas = [];
-  List<DetalleComboDto> combos = [];
-
-  // Carritos/seleccones
   Map<int, int> carritoManillas = {};
+
+  // MESAS
+  List<DetalleMesaDto> mesas = [];
   Map<int, bool> mesasSeleccionadas = {};
+
+  // COMBOS
+  List<DetalleComboDto> combos = [];
   Map<int, int> carritoCombos = {};
 
   @override
@@ -53,13 +56,14 @@ class _ComprasScreenState extends State<ComprasScreen> {
 
     try {
       manillas = await _productosService.getManillasPorBoliche(widget.bolicheId);
+      mesas = await _productosService.getMesasPorBoliche(widget.bolicheId);
+      combos = await _productosService.getCombosPorBoliche(widget.bolicheId);
     } catch (e) {
       manillas = [];
       mesas = [];
       combos = [];
     }
 
-    // Inicializar estados
     carritoManillas = {for (var m in manillas) m.id: 0};
     mesasSeleccionadas = {for (var m in mesas) m.id: false};
     carritoCombos = {for (var c in combos) c.id: 0};
@@ -68,38 +72,34 @@ class _ComprasScreenState extends State<ComprasScreen> {
   }
 
   int get totalItems {
-    final totalManillas = carritoManillas.values.fold(0, (p, e) => p + e);
-    final totalMesas =
-        mesasSeleccionadas.values.where((v) => v == true).length;
-    final totalCombos = carritoCombos.values.fold(0, (p, e) => p + e);
-
+    final totalManillas = carritoManillas.values.fold(0, (p, c) => p + c);
+    final totalMesas = mesasSeleccionadas.values.where((v) => v == true).length;
+    final totalCombos = carritoCombos.values.fold(0, (p, c) => p + c);
     return totalManillas + totalMesas + totalCombos;
   }
 
-  Future<void> _realizarCompra() async {
+  Future<void> _comprar() async {
     setState(() => loading = true);
 
-    // --- Manillas ---
-    final manillasAComprar = carritoManillas.entries
+    // MANILLAS
+    final manillasSeleccionadas = carritoManillas.entries
         .where((e) => e.value > 0)
-        .map(
-          (e) => ItemManillaDto(
-            manillaTipoId: e.key,
-            cantidad: e.value,
-          ),
-        )
+        .map((e) => ItemManillaDto(
+              manillaTipoId: e.key,
+              cantidad: e.value,
+            ))
         .toList();
 
-    if (manillasAComprar.isNotEmpty) {
+    if (manillasSeleccionadas.isNotEmpty) {
       await _comprasService.comprarManillas(
         CrearCompraManillasDto(
           bolicheId: widget.bolicheId,
-          manillas: manillasAComprar,
+          manillas: manillasSeleccionadas,
         ),
       );
     }
 
-    // --- Mesas ---
+    // MESAS
     for (var entry in mesasSeleccionadas.entries) {
       if (entry.value) {
         await _comprasService.reservarMesa(
@@ -111,27 +111,22 @@ class _ComprasScreenState extends State<ComprasScreen> {
       }
     }
 
-    // --- Combos ---
-    final combosAComprar = carritoCombos.entries
+    // COMBOS
+    final combosSeleccionados = carritoCombos.entries
         .where((e) => e.value > 0)
-        .map(
-          (e) => ItemComboDto(
-            comboId: e.key,
-            cantidad: e.value,
-          ),
-        )
+        .map((e) => ItemComboDto(comboId: e.key, cantidad: e.value))
         .toList();
 
-    if (combosAComprar.isNotEmpty) {
+    if (combosSeleccionados.isNotEmpty) {
       await _comprasService.comprarCombos(
         CrearCompraCombosDto(
           bolicheId: widget.bolicheId,
-          combos: combosAComprar,
+          combos: combosSeleccionados,
         ),
       );
     }
 
-    // Reset
+    // Reset selección
     carritoManillas.updateAll((key, value) => 0);
     mesasSeleccionadas.updateAll((key, value) => false);
     carritoCombos.updateAll((key, value) => 0);
@@ -139,7 +134,7 @@ class _ComprasScreenState extends State<ComprasScreen> {
     setState(() => loading = false);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Compra realizada correctamente")),
+      const SnackBar(content: Text('Compra realizada con éxito')),
     );
   }
 
@@ -148,7 +143,7 @@ class _ComprasScreenState extends State<ComprasScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF1A002B),
       appBar: AppBar(
-        title: Text('Compra en ${widget.bolicheNombre}'),
+        title: Text('Compras - ${widget.bolicheNombre}'),
         backgroundColor: const Color(0xFF2D014F),
         centerTitle: true,
       ),
@@ -159,175 +154,236 @@ class _ComprasScreenState extends State<ComprasScreen> {
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Manillas ---
-                  if (manillas.isNotEmpty) ...[
-                    const Text(
-                      "Manillas",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ...manillas.map((m) {
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "${m.nombre} - Bs. ${m.precio}",
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove,
-                                    color: Colors.redAccent),
-                                onPressed: () {
-                                  setState(() {
-                                    if (carritoManillas[m.id]! > 0) {
-                                      carritoManillas[m.id] =
-                                          carritoManillas[m.id]! - 1;
-                                    }
-                                  });
-                                },
-                              ),
-                              Text(
-                                "${carritoManillas[m.id]}",
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add,
-                                    color: Colors.greenAccent),
-                                onPressed: () {
-                                  setState(() {
-                                    carritoManillas[m.id] =
-                                        carritoManillas[m.id]! + 1;
-                                  });
-                                },
-                              ),
-                            ],
-                          )
-                        ],
-                      );
-                    }),
-                  ],
+                  // MANILLAS
+                  const Text(
+                    'Manillas',
+                    style: TextStyle(color: Colors.white, fontSize: 22),
+                  ),
+                  const SizedBox(height: 10),
+                  ...manillas.map((m) => _itemCantidad(
+                        nombre: m.nombre,
+                        precio: m.precio,
+                        cantidad: carritoManillas[m.id]!,
+                        onAdd: () {
+                          setState(() =>
+                              carritoManillas[m.id] = carritoManillas[m.id]! + 1);
+                        },
+                        onRemove: () {
+                          if (carritoManillas[m.id]! > 0) {
+                            setState(() =>
+                                carritoManillas[m.id] =
+                                    carritoManillas[m.id]! - 1);
+                          }
+                        },
+                      )),
+                  const SizedBox(height: 30),
 
-                  const SizedBox(height: 24),
-
-                  // --- Mesas ---
+                  // MESAS
                   if (mesas.isNotEmpty) ...[
                     const Text(
-                      "Mesas",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                      ),
+                      'Mesas',
+                      style: TextStyle(color: Colors.white, fontSize: 22),
                     ),
-                    const SizedBox(height: 8),
-                    ...mesas.map((mesa) {
-                      return CheckboxListTile(
+                    const SizedBox(height: 10),
+                    ...mesas.map(
+                      (mesa) => CheckboxListTile(
+                        title: Text(
+                          '${mesa.nombreONumero} - Bs. ${mesa.precioReserva}',
+                          style: const TextStyle(color: Colors.white),
+                        ),
                         value: mesasSeleccionadas[mesa.id],
-                        onChanged: (val) {
+                        onChanged: (v) {
                           setState(() {
-                            mesasSeleccionadas[mesa.id] = val ?? false;
+                            mesasSeleccionadas[mesa.id] = v ?? false;
                           });
                         },
                         activeColor: Colors.purpleAccent,
                         checkColor: Colors.white,
-                        title: Text(
-                          "${mesa.nombreONumero} - Bs. ${mesa.precioReserva}",
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      );
-                    }),
+                      ),
+                    ),
                   ],
+                  const SizedBox(height: 30),
 
-                  const SizedBox(height: 24),
-
-                  // --- Combos ---
+                  // COMBOS - sección mejorada
                   if (combos.isNotEmpty) ...[
                     const Text(
-                      "Combos",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                      ),
+                      'Combos',
+                      style: TextStyle(color: Colors.white, fontSize: 22),
                     ),
-                    const SizedBox(height: 8),
-                    ...combos.map((c) {
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "${c.nombre} - Bs. ${c.precio}",
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove,
-                                    color: Colors.redAccent),
-                                onPressed: () {
-                                  setState(() {
-                                    if (carritoCombos[c.id]! > 0) {
-                                      carritoCombos[c.id] =
-                                          carritoCombos[c.id]! - 1;
-                                    }
-                                  });
-                                },
-                              ),
-                              Text(
-                                "${carritoCombos[c.id]}",
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add,
-                                    color: Colors.greenAccent),
-                                onPressed: () {
-                                  setState(() {
-                                    carritoCombos[c.id] =
-                                        carritoCombos[c.id]! + 1;
-                                  });
-                                },
-                              ),
-                            ],
-                          )
-                        ],
-                      );
-                    }),
+                    const SizedBox(height: 10),
+                    ...combos.map((c) => _comboCard(c)),
                   ],
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
 
-                  Center(
-                    child: Text(
-                      "Total items: $totalItems",
-                      style:
-                          const TextStyle(color: Colors.white, fontSize: 18),
+                  Text(
+                    'Total Ítems: $totalItems',
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  const SizedBox(height: 15),
+
+                  ElevatedButton(
+                    onPressed: totalItems == 0 ? null : _comprar,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purpleAccent,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 70, vertical: 18),
+                    ),
+                    child: const Text(
+                      'Comprar',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: totalItems == 0 ? null : _realizarCompra,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purpleAccent,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 40, vertical: 14),
-                      ),
-                      child: const Text(
-                        "Comprar",
-                        style: TextStyle(fontSize: 18),
-                      ),
-                    ),
-                  )
                 ],
               ),
             ),
+    );
+  }
+
+  // ====== Widgets Reutilizables ======
+
+  Widget _itemCantidad({
+    required String nombre,
+    required double precio,
+    required int cantidad,
+    required VoidCallback onAdd,
+    required VoidCallback onRemove,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '$nombre - Bs. $precio',
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove, color: Colors.redAccent),
+                onPressed: onRemove,
+              ),
+              Text(
+                '$cantidad',
+                style: const TextStyle(color: Colors.white),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: Colors.greenAccent),
+                onPressed: onAdd,
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  // ====== Nuevo Widget para combos estético ======
+  Widget _comboCard(DetalleComboDto c) {
+    return Card(
+      color: const Color(0xFF2D014F),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen
+            if (c.imagenUrl != null && c.imagenUrl!.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  c.imagenUrl!,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 80,
+                    height: 80,
+                    color: Colors.grey[800],
+                    child: const Icon(Icons.image_not_supported,
+                        color: Colors.white70),
+                  ),
+                ),
+              )
+            else
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.grey[800],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.image, color: Colors.white70),
+              ),
+            const SizedBox(width: 12),
+
+            // Información
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    c.nombre,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  if (c.descripcion != null && c.descripcion!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        c.descripcion!,
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 14),
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Bs. ${c.precio.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        color: Colors.purpleAccent,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+
+            // Cantidad
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove_circle, color: Colors.redAccent),
+                  onPressed: () {
+                    if (carritoCombos[c.id]! > 0) {
+                      setState(() =>
+                          carritoCombos[c.id] = carritoCombos[c.id]! - 1);
+                    }
+                  },
+                ),
+                Text(
+                  '${carritoCombos[c.id]}',
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                IconButton(
+                  icon:
+                      const Icon(Icons.add_circle, color: Colors.greenAccent),
+                  onPressed: () {
+                    setState(() =>
+                        carritoCombos[c.id] = carritoCombos[c.id]! + 1);
+                  },
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
     );
   }
 }

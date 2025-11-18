@@ -9,12 +9,14 @@ import 'package:doorpass/models/admin/CrearComboDto.dart';
 import 'package:doorpass/models/admin/CrearManillaTipoDto.dart';
 import 'package:doorpass/models/admin/CrearMesaDto.dart';
 import 'package:doorpass/models/admin/CrearStaffDto.dart';
+import 'package:doorpass/models/admin/UpdateBolicheDto.dart';
+import 'package:doorpass/models/admin/UpdateComboDto.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminService {
   final String _baseUrl =
-      'https://app-251116165954.azurewebsites.net/api/admin';
+      'https://app-251117192144.azurewebsites.net/api/admin';
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -208,7 +210,7 @@ class AdminService {
     return null;
   }
 
-  Future<bool> updateCombo(int id, Combo dto) async {
+  Future<bool> updateCombo(int id, CrearComboDto dto) async {
     final token = await _getToken();
     if (token == null) return false;
 

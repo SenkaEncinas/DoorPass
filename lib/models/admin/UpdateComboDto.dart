@@ -1,31 +1,33 @@
-class UpdateBolicheDto {
-  final String nombre;
-  final String? direccion;
-  final String? descripcion;
-  final String? imagenUrl;
+class UpdateComboDto {
+  String nombre;
+  String? descripcion;
+  double precio;
+  String? imagenUrl;
 
-  UpdateBolicheDto({
+  UpdateComboDto({
     required this.nombre,
-    this.direccion,
     this.descripcion,
+    required this.precio,
     this.imagenUrl,
   });
 
-  factory UpdateBolicheDto.fromJson(Map<String, dynamic> json) {
-    return UpdateBolicheDto(
-      nombre: json['nombre'],
-      direccion: json['direccion'],
-      descripcion: json['descripcion'],
-      imagenUrl: json['imagenUrl'],
-    );
-  }
-
+  // Convertir a JSON para enviar al backend
   Map<String, dynamic> toJson() {
     return {
       'nombre': nombre,
-      'direccion': direccion,
       'descripcion': descripcion,
+      'precio': precio,
       'imagenUrl': imagenUrl,
     };
+  }
+
+  // Crear instancia desde JSON (opcional, si recibes datos del backend)
+  factory UpdateComboDto.fromJson(Map<String, dynamic> json) {
+    return UpdateComboDto(
+      nombre: json['nombre'],
+      descripcion: json['descripcion'],
+      precio: (json['precio'] as num).toDouble(),
+      imagenUrl: json['imagenUrl'],
+    );
   }
 }

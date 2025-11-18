@@ -69,68 +69,126 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
         onPressed: _mostrarDialogoCrear,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body:
-          _loading
-              ? const Center(
-                child: CircularProgressIndicator(color: Colors.purpleAccent),
-              )
-              : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: boliches.length,
-                itemBuilder: (context, index) {
-                  final boliche = boliches[index];
-                  return Card(
-                    color: const Color(0xFF1A0026),
-                    elevation: 6,
-                    shadowColor: Colors.purpleAccent,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(12),
-                      leading:
-                          boliche.imagenUrl != null &&
-                                  boliche.imagenUrl!.isNotEmpty
-                              ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  boliche.imagenUrl!,
-                                  width: 60,
-                                  height: 60,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                              : null,
-                      title: Text(
-                        boliche.nombre,
-                        style: GoogleFonts.orbitron(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      subtitle: Text(
-                        boliche.direccion,
-                        style: GoogleFonts.orbitron(color: Colors.white70),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.white),
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (_) => EdicionAdminBoliche(boliche: boliche),
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.purpleAccent),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: boliches.length,
+              itemBuilder: (context, index) {
+                final boliche = boliches[index];
+                return Card(
+                  color: const Color(0xFF1A0026),
+                  elevation: 6,
+                  shadowColor: Colors.purpleAccent,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(12),
+                    leading: boliche.imagenUrl != null &&
+                            boliche.imagenUrl!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              boliche.imagenUrl!,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
                             ),
-                          );
-                          _cargarBoliches();
-                        },
+                          )
+                        : null,
+                    title: Text(
+                      boliche.nombre,
+                      style: GoogleFonts.orbitron(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
-                  );
-                },
-              ),
+                    subtitle: Text(
+                      boliche.direccion,
+                      style: GoogleFonts.orbitron(color: Colors.white70),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ===== BOTÓN EDITAR =====
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.white),
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    EdicionAdminBoliche(boliche: boliche),
+                              ),
+                            );
+                            _cargarBoliches();
+                          },
+                        ),
+                        // ===== BOTÓN ELIMINAR =====
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                backgroundColor: const Color(0xFF1A0026),
+                                title: const Text(
+                                  'Confirmar eliminación',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                content: Text(
+                                  '¿Estás seguro de eliminar "${boliche.nombre}"?',
+                                  style: const TextStyle(color: Colors.white70),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text(
+                                      'Cancelar',
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.redAccent,
+                                    ),
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text('Eliminar'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              final ok =
+                                  await _adminService.eliminarBoliche(boliche.id);
+                              if (ok) {
+                                _cargarBoliches();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Boliche "${boliche.nombre}" eliminado')),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Error al eliminar boliche')),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 
@@ -142,79 +200,76 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
 
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            backgroundColor: const Color(0xFF1A0026),
-            title: const Text(
-              'Crear nuevo boliche',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _campoTexto('Nombre', nombreController),
-                  _campoTexto('Dirección', direccionController),
-                  _campoTexto('Descripción', descripcionController),
-                  _campoTexto('Imagen URL (opcional)', imagenController),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Cancelar',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF9D00FF),
-                ),
-                onPressed: () async {
-                  if (nombreController.text.isEmpty ||
-                      direccionController.text.isEmpty ||
-                      descripcionController.text.isEmpty)
-                    return;
-
-                  final nuevoBoliche = await _adminService.crearBoliche(
-                    CrearBolicheDto(
-                      nombre: nombreController.text,
-                      direccion: direccionController.text,
-                      descripcion: descripcionController.text,
-                      imagenUrl:
-                          imagenController.text.isNotEmpty
-                              ? imagenController.text
-                              : null,
-                    ),
-                  );
-
-                  if (nuevoBoliche != null) {
-                    boliches.add(
-                      DetalleBolicheSimpleDto(
-                        id: nuevoBoliche.id,
-                        nombre: nuevoBoliche.nombre,
-                        direccion: nuevoBoliche.direccion ?? '',
-                        imagenUrl: nuevoBoliche.imagenUrl ?? '',
-                        descripcion: '',
-                      ),
-                    );
-                    setState(() {});
-                    Navigator.pop(context);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Error al crear boliche')),
-                    );
-                  }
-                },
-                child: const Text(
-                  'Guardar',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text(
+          'Crear nuevo boliche',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _campoTexto('Nombre', nombreController),
+              _campoTexto('Dirección', direccionController),
+              _campoTexto('Descripción', descripcionController),
+              _campoTexto('Imagen URL (opcional)', imagenController),
             ],
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9D00FF),
+            ),
+            onPressed: () async {
+              if (nombreController.text.isEmpty ||
+                  direccionController.text.isEmpty ||
+                  descripcionController.text.isEmpty) return;
+
+              final nuevoBoliche = await _adminService.crearBoliche(
+                CrearBolicheDto(
+                  nombre: nombreController.text,
+                  direccion: direccionController.text,
+                  descripcion: descripcionController.text,
+                  imagenUrl: imagenController.text.isNotEmpty
+                      ? imagenController.text
+                      : null,
+                ),
+              );
+
+              if (nuevoBoliche != null) {
+                boliches.add(
+                  DetalleBolicheSimpleDto(
+                    id: nuevoBoliche.id,
+                    nombre: nuevoBoliche.nombre,
+                    direccion: nuevoBoliche.direccion ?? '',
+                    imagenUrl: nuevoBoliche.imagenUrl ?? '',
+                    descripcion: '',
+                  ),
+                );
+                setState(() {});
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Error al crear boliche')),
+                );
+              }
+            },
+            child: const Text(
+              'Guardar',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

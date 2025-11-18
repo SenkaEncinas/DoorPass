@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  final String _baseUrl = 'https://app-251116165954.azurewebsites.net/api/auth';
+  final String _baseUrl = 'https://app-251117192144.azurewebsites.net/api/auth';
 
   // Registro
   Future<UsuarioDto?> register(RegistroDto dto) async {

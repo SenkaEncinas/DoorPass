@@ -1,4 +1,8 @@
 // lib/screens/Admin/EdicionAdminBoliche.dart
+import 'package:doorpass/models/Entities/Combo.dart';
+import 'package:doorpass/models/Productos/DetalleComboDto.dart';
+import 'package:doorpass/models/Productos/DetalleManillaTipoDto.dart';
+import 'package:doorpass/models/Productos/DetalleMesaDto.dart';
 import 'package:flutter/material.dart';
 import 'package:doorpass/models/Productos/DetalleBolicheDto.dart';
 import 'package:doorpass/models/Productos/DetalleBolichesSimpleDto.dart';
@@ -48,49 +52,48 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
         backgroundColor: const Color(0xFF6A0DAD),
       ),
       backgroundColor: const Color(0xFF100018),
-      body:
-          _loading
-              ? const Center(
-                child: CircularProgressIndicator(color: Colors.purpleAccent),
-              )
-              : _detalle == null
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.purpleAccent),
+            )
+          : _detalle == null
               ? Center(
-                child: Text(
-                  'No se pudo cargar el detalle',
-                  style: GoogleFonts.orbitron(color: Colors.white),
-                ),
-              )
+                  child: Text(
+                    'No se pudo cargar el detalle',
+                    style: GoogleFonts.orbitron(color: Colors.white),
+                  ),
+                )
               : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _detalle!.nombre,
-                      style: GoogleFonts.orbitron(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _detalle!.nombre,
+                        style: GoogleFonts.orbitron(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Text(
-                      _detalle!.direccion ?? '',
-                      style: GoogleFonts.orbitron(
-                        color: Colors.purpleAccent,
-                        fontSize: 16,
+                      Text(
+                        _detalle!.direccion ?? '',
+                        style: GoogleFonts.orbitron(
+                          color: Colors.purpleAccent,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    _seccionManillas(),
-                    const SizedBox(height: 20),
-                    _seccionMesas(),
-                    const SizedBox(height: 20),
-                    _seccionStaff(),
-                    const SizedBox(height: 20),
-                    _seccionCombos(),
-                  ],
+                      const SizedBox(height: 20),
+                      _seccionManillas(),
+                      const SizedBox(height: 20),
+                      _seccionMesas(),
+                      const SizedBox(height: 20),
+                      _seccionStaff(),
+                      const SizedBox(height: 20),
+                      _seccionCombos(),
+                    ],
+                  ),
                 ),
-              ),
     );
   }
 
@@ -110,17 +113,31 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            ElevatedButton(
-              onPressed: _crearManilla,
-              child: const Text('Nueva Manilla'),
-            ),
+            ElevatedButton(onPressed: _crearManilla, child: const Text('Nueva Manilla')),
           ],
         ),
         const SizedBox(height: 8),
         ...?_detalle?.manillas.map(
-          (m) => Text(
-            '${m.nombre}: Bs. ${m.precio} (Stock: ${m.stock})',
-            style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+          (m) => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${m.nombre}: Bs. ${m.precio} (Stock: ${m.stock})',
+                style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => _editarManilla(m),
+                    icon: const Icon(Icons.edit, color: Colors.white70),
+                  ),
+                  IconButton(
+                    onPressed: () => _eliminarManilla(m.id),
+                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ],
@@ -134,50 +151,101 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
 
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            backgroundColor: const Color(0xFF1A0026),
-            title: const Text(
-              'Crear nueva manilla',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _campoTexto('Nombre', nombreController),
-                _campoTexto('Precio', precioController, isNumber: true),
-                _campoTexto('Stock', stockController, isNumber: true),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Cancelar',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final dto = CrearManillaTipoDto(
-                    nombre: nombreController.text,
-                    precio: double.tryParse(precioController.text) ?? 0,
-                    stock: int.tryParse(stockController.text) ?? 0,
-                  );
-                  final nueva = await _adminService.crearManilla(
-                    _detalle!.id,
-                    dto,
-                  );
-                  if (nueva != null) {
-                    _cargarDetalle();
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('Guardar'),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Crear nueva manilla', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _campoTexto('Nombre', nombreController),
+            _campoTexto('Precio', precioController, isNumber: true),
+            _campoTexto('Stock', stockController, isNumber: true),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(
+            onPressed: () async {
+              final dto = CrearManillaTipoDto(
+                nombre: nombreController.text,
+                precio: double.tryParse(precioController.text) ?? 0,
+                stock: int.tryParse(stockController.text) ?? 0,
+              );
+              final nueva = await _adminService.crearManilla(_detalle!.id, dto);
+              if (nueva != null) {
+                _cargarDetalle();
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Guardar'),
           ),
+        ],
+      ),
     );
+  }
+
+  void _editarManilla(DetalleManillaTipoDto manilla) {
+    final nombreController = TextEditingController(text: manilla.nombre);
+    final precioController = TextEditingController(text: manilla.precio.toString());
+    final stockController = TextEditingController(text: manilla.stock.toString());
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Editar Manilla', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _campoTexto('Nombre', nombreController),
+            _campoTexto('Precio', precioController, isNumber: true),
+            _campoTexto('Stock', stockController, isNumber: true),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(
+            onPressed: () async {
+              final dto = CrearManillaTipoDto(
+                nombre: nombreController.text,
+                precio: double.tryParse(precioController.text) ?? 0,
+                stock: int.tryParse(stockController.text) ?? 0,
+              );
+              final success = await _adminService.actualizarManilla(manilla.id, dto);
+              if (success) {
+                _cargarDetalle();
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _eliminarManilla(int id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Eliminar Manilla', style: TextStyle(color: Colors.white)),
+        content: const Text('¿Desea eliminar esta manilla?', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+
+    if (confirmed ?? false) {
+      final success = await _adminService.eliminarManilla(id);
+      if (success) _cargarDetalle();
+    }
   }
 
   // ===================== Sección Mesas =====================
@@ -188,25 +256,23 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Mesas:',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _crearMesa,
-              child: const Text('Nueva Mesa'),
-            ),
+            const Text('Mesas:', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            ElevatedButton(onPressed: _crearMesa, child: const Text('Nueva Mesa')),
           ],
         ),
         const SizedBox(height: 8),
         ...?_detalle?.mesas.map(
-          (m) => Text(
-            '${m.nombreONumero}: Bs. ${m.precioReserva}',
-            style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+          (m) => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${m.nombreONumero}: Bs. ${m.precioReserva}', style: GoogleFonts.orbitron(color: Colors.purpleAccent)),
+              Row(
+                children: [
+                  IconButton(onPressed: () => _editarMesa(m), icon: const Icon(Icons.edit, color: Colors.white70)),
+                  IconButton(onPressed: () => _eliminarMesa(m.id), icon: const Icon(Icons.delete, color: Colors.redAccent)),
+                ],
+              ),
+            ],
           ),
         ),
       ],
@@ -220,50 +286,97 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
 
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            backgroundColor: const Color(0xFF1A0026),
-            title: const Text(
-              'Crear nueva mesa',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _campoTexto('Nombre o Número', nombreController),
-                _campoTexto('Ubicación', ubicacionController),
-                _campoTexto('Precio Reserva', precioController, isNumber: true),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Cancelar',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final dto = CrearMesaDto(
-                    nombreONumero: nombreController.text,
-                    ubicacion: ubicacionController.text,
-                    precioReserva: double.tryParse(precioController.text) ?? 0,
-                  );
-                  final nueva = await _adminService.crearMesa(
-                    _detalle!.id,
-                    dto,
-                  );
-                  if (nueva != null) {
-                    _cargarDetalle();
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('Guardar'),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Crear nueva mesa', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _campoTexto('Nombre o Número', nombreController),
+            _campoTexto('Ubicación', ubicacionController),
+            _campoTexto('Precio Reserva', precioController, isNumber: true),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(
+            onPressed: () async {
+              final dto = CrearMesaDto(
+                nombreONumero: nombreController.text,
+                ubicacion: ubicacionController.text,
+                precioReserva: double.tryParse(precioController.text) ?? 0,
+              );
+              final nueva = await _adminService.crearMesa(_detalle!.id, dto);
+              if (nueva != null) {
+                _cargarDetalle();
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Guardar'),
           ),
+        ],
+      ),
     );
+  }
+
+  void _editarMesa(DetalleMesaDto mesa) {
+    final nombreController = TextEditingController(text: mesa.nombreONumero);
+    final ubicacionController = TextEditingController(text: mesa.ubicacion ?? '');
+    final precioController = TextEditingController(text: mesa.precioReserva.toString());
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Editar Mesa', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _campoTexto('Nombre o Número', nombreController),
+            _campoTexto('Ubicación', ubicacionController),
+            _campoTexto('Precio Reserva', precioController, isNumber: true),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(
+            onPressed: () async {
+              final dto = CrearMesaDto(
+                nombreONumero: nombreController.text,
+                ubicacion: ubicacionController.text,
+                precioReserva: double.tryParse(precioController.text) ?? 0,
+              );
+              final success = await _adminService.actualizarMesa(mesa.id, dto);
+              if (success) {
+                _cargarDetalle();
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _eliminarMesa(int id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Eliminar Mesa', style: TextStyle(color: Colors.white)),
+        content: const Text('¿Desea eliminar esta mesa?', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+
+    if (confirmed ?? false) {
+      final success = await _adminService.eliminarMesa(id);
+      if (success) _cargarDetalle();
+    }
   }
 
   // ===================== Sección Staff =====================
@@ -274,25 +387,12 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Staff:',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _crearStaff,
-              child: const Text('Nuevo Staff'),
-            ),
+            const Text('Staff:', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            ElevatedButton(onPressed: _crearStaff, child: const Text('Nuevo Staff')),
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Lista de staff aún no implementada',
-          style: TextStyle(color: Colors.purpleAccent),
-        ),
+        const Text('Lista de staff aún no implementada', style: TextStyle(color: Colors.purpleAccent)),
       ],
     );
   }
@@ -304,151 +404,263 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
 
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            backgroundColor: const Color(0xFF1A0026),
-            title: const Text(
-              'Crear nuevo Staff',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _campoTexto('Nombre', nombreController),
-                _campoTexto('Email', emailController),
-                _campoTexto('Password', passwordController, isPassword: true),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Cancelar',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final dto = CrearStaffDto(
-                    nombre: nombreController.text,
-                    email: emailController.text,
-                    password: passwordController.text,
-                  );
-                  final nuevo = await _adminService.crearStaff(dto);
-                  if (nuevo != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Staff creado')),
-                    );
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('Guardar'),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0026),
+        title: const Text('Crear nuevo Staff', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _campoTexto('Nombre', nombreController),
+            _campoTexto('Email', emailController),
+            _campoTexto('Password', passwordController, isPassword: true),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(
+            onPressed: () async {
+              final dto = CrearStaffDto(
+                nombre: nombreController.text,
+                email: emailController.text,
+                password: passwordController.text,
+              );
+              final nuevo = await _adminService.crearStaff(dto);
+              if (nuevo != null) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Staff creado')));
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Guardar'),
           ),
+        ],
+      ),
     );
   }
 
   // ===================== Sección Combos =====================
-  Widget _seccionCombos() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+// ===================== Sección Combos =====================
+Widget _seccionCombos() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Combos:',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _crearCombo,
+            child: const Text('Nuevo Combo'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      ...?_detalle?.combos.map(
+        (c) => Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Combos:',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            Text(
+              '${c.nombre}: Bs. ${c.precio}',
+              style: GoogleFonts.orbitron(color: Colors.purpleAccent),
             ),
-            ElevatedButton(
-              onPressed: _crearCombo,
-              child: const Text('Nuevo Combo'),
+            Row(
+              children: [
+                // ===== BOTÓN EDITAR =====
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.white70),
+                  onPressed: () => _editarCombo(c),
+                ),
+                // ===== BOTÓN ELIMINAR =====
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  onPressed: () async {
+                    final ok = await _adminService.deleteCombo(c.id);
+                    if (ok) _cargarDetalle();
+                  },
+                ),
+              ],
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        ...?_detalle?.combos.map(
-          (c) => Text(
-            '${c.nombre}: Bs. ${c.precio}',
-            style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+      ),
+      if ((_detalle?.combos.isEmpty ?? true))
+        const Text(
+          'No hay combos disponibles',
+          style: TextStyle(color: Colors.purpleAccent),
+        ),
+    ],
+  );
+}
+// ===================== Editar Combo =====================
+void _editarCombo(DetalleComboDto c) {
+  final nombreController = TextEditingController(text: c.nombre);
+  final precioController = TextEditingController(text: c.precio.toString());
+  final descripcionController = TextEditingController(text: c.descripcion ?? '');
+  final imagenController = TextEditingController(text: c.imagenUrl ?? '');
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A0026),
+      title: const Text(
+        "Editar Combo",
+        style: TextStyle(color: Colors.white),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _campoTexto("Nombre", nombreController),
+            _campoTexto("Precio", precioController, isNumber: true),
+            _campoTexto("Descripción", descripcionController),
+            _campoTexto("URL de Imagen", imagenController),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancelar", style: TextStyle(color: Colors.white70)),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            final nombre = nombreController.text.trim();
+            final precio = double.tryParse(precioController.text) ?? 0;
+
+            if (nombre.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('El nombre es obligatorio')),
+              );
+              return;
+            }
+
+            if (precio <= 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('El precio debe ser mayor a 0')),
+              );
+              return;
+            }
+
+            final dto = CrearComboDto(
+              nombre: nombre,
+              precio: precio,
+              descripcion: descripcionController.text.isNotEmpty
+                  ? descripcionController.text
+                  : null,
+              imagenUrl: imagenController.text.isNotEmpty
+                  ? imagenController.text
+                  : null,
+            );
+
+            final ok = await _adminService.updateCombo(c.id, dto);
+
+            if (ok) {
+              _cargarDetalle(); // recarga los datos
+              Navigator.pop(context); // cierra el diálogo
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Error al actualizar el combo')),
+              );
+            }
+          },
+          child: const Text("Guardar"),
+        ),
+      ],
+    ),
+  );
+}
+void _crearCombo() {
+  final nombreController = TextEditingController();
+  final precioController = TextEditingController();
+  final descripcionController = TextEditingController();
+  final imagenController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A0026),
+      title: const Text(
+        'Crear nuevo combo',
+        style: TextStyle(color: Colors.white),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _campoTexto('Nombre', nombreController),
+            _campoTexto('Precio', precioController, isNumber: true),
+            _campoTexto('Descripción', descripcionController),
+            _campoTexto('URL de Imagen', imagenController),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(
+            'Cancelar',
+            style: TextStyle(color: Colors.white70),
           ),
         ),
-        if ((_detalle?.combos.isEmpty ?? true))
-          const Text(
-            'No hay combos disponibles',
-            style: TextStyle(color: Colors.purpleAccent),
-          ),
+        ElevatedButton(
+          onPressed: () async {
+            final nombre = nombreController.text.trim();
+            final precio = double.tryParse(precioController.text) ?? 0;
+
+            if (nombre.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('El nombre es obligatorio')),
+              );
+              return;
+            }
+
+            if (precio <= 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('El precio debe ser mayor a 0')),
+              );
+              return;
+            }
+
+            final dto = CrearComboDto(
+              nombre: nombre,
+              precio: precio,
+              descripcion: descripcionController.text.isNotEmpty
+                  ? descripcionController.text
+                  : null,
+              imagenUrl: imagenController.text.isNotEmpty
+                  ? imagenController.text
+                  : null,
+            );
+
+            // Llamada al servicio para crear el combo
+            final nuevo = await _adminService.crearCombo(_detalle!.id, dto);
+
+            if (nuevo != null) {
+              _cargarDetalle(); // recarga los datos
+              Navigator.pop(context); // cierra el diálogo
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Error al crear el combo')),
+              );
+            }
+          },
+          child: const Text('Guardar'),
+        ),
       ],
-    );
-  }
-
-  void _crearCombo() {
-    final nombreController = TextEditingController();
-    final precioController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder:
-          (_) => AlertDialog(
-            backgroundColor: const Color(0xFF1A0026),
-            title: const Text(
-              'Crear nuevo combo',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _campoTexto('Nombre', nombreController),
-                _campoTexto('Precio', precioController, isNumber: true),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Cancelar',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (nombreController.text.isEmpty) return;
-
-                  final dto = CrearComboDto(
-                    nombre: nombreController.text,
-                    precio: double.tryParse(precioController.text) ?? 0,
-                  );
-
-                  final nuevo = await _adminService.crearCombo(
-                    _detalle!.id,
-                    dto,
-                  );
-                  if (nuevo != null) {
-                    _cargarDetalle();
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('Guardar'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  // ===================== Campo de texto =====================
-  Widget _campoTexto(
-    String label,
-    TextEditingController controller, {
-    bool isNumber = false,
-    bool isPassword = false,
-  }) {
+    ),
+  );
+}
+  // ===================== Campo Texto =====================
+  Widget _campoTexto(String label, TextEditingController controller,
+      {bool isNumber = false, bool isPassword = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextField(
         controller: controller,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
@@ -456,15 +668,16 @@ class _EdicionAdminBolicheState extends State<EdicionAdminBoliche> {
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.white70),
-          enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white38),
-          ),
-          focusedBorder: const UnderlineInputBorder(
+          labelStyle: const TextStyle(color: Colors.purpleAccent),
+          enabledBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.purpleAccent),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.purpleAccent, width: 2),
           ),
         ),
       ),
     );
   }
 }
+  
