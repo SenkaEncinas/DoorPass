@@ -22,6 +22,74 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
     _futureHistorial = _service.getMiHistorial();
   }
 
+  // NUEVA FUNCIÓN: cancelar compra
+  Future<void> _cancelarCompra(DetalleCompraDto compra) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A002B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Cancelar compra',
+          style: GoogleFonts.orbitron(color: Colors.white),
+        ),
+        content: Text(
+          '¿Seguro que quieres cancelar la compra #${compra.compraId}?',
+          style: GoogleFonts.orbitron(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'No',
+              style: GoogleFonts.orbitron(color: Colors.white70),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Sí, cancelar',
+              style: GoogleFonts.orbitron(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    final exito = await _service.cancelarCompra(compra.compraId);
+
+    if (!mounted) return;
+
+    if (exito) {
+      // recargamos el historial para que se vea como cancelada
+      setState(() {
+        _futureHistorial = _service.getMiHistorial();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Compra #${compra.compraId} cancelada con éxito',
+            style: GoogleFonts.orbitron(),
+          ),
+          backgroundColor: Colors.greenAccent,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No se pudo cancelar la compra #${compra.compraId}',
+            style: GoogleFonts.orbitron(),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
   void _mostrarDetalleCompra(DetalleCompraDto compra) {
     showDialog(
       context: context,
@@ -180,12 +248,34 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
 
                   const SizedBox(height: 16),
 
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purpleAccent,
-                    ),
-                    child: Text("Cerrar", style: GoogleFonts.orbitron()),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purpleAccent,
+                        ),
+                        child: Text("Cerrar", style: GoogleFonts.orbitron()),
+                      ),
+                      const SizedBox(width: 12),
+                      if (compra.estaActiva)
+                        ElevatedButton(
+                          onPressed: () {
+                            // cierro el diálogo de detalle
+                            Navigator.pop(context);
+                            // y luego ejecuto la cancelación
+                            _cancelarCompra(compra);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                          ),
+                          child: Text(
+                            "Cancelar compra",
+                            style: GoogleFonts.orbitron(color: Colors.white),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -262,7 +352,7 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
               final compra = compras[index];
               final gradientColors =
                   compra.estaActiva
-                      ? [Color(0xFF2D014F), Color(0xFF3D025F)]
+                      ? [const Color(0xFF2D014F), const Color(0xFF3D025F)]
                       : [
                         Colors.redAccent.withOpacity(0.7),
                         Colors.redAccent.withOpacity(0.4),
@@ -339,3 +429,4 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
     );
   }
 }
+  
