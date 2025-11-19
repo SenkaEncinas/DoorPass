@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:doorpass/services/compras_service.dart';
 import 'package:doorpass/models/Compras/DetalleCompraDto.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:convert';
 
 class HistorialComprasScreen extends StatefulWidget {
   const HistorialComprasScreen({super.key});
@@ -23,108 +25,195 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
   void _mostrarDetalleCompra(DetalleCompraDto compra) {
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        backgroundColor: const Color(0xFF1A002B),
-        insetPadding: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Compra #${compra.compraId}",
-                style: GoogleFonts.orbitron(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(compra.nombreBoliche,
-                  style: GoogleFonts.orbitron(
-                      color: Colors.white70, fontSize: 20)),
-              const SizedBox(height: 8),
-              Text("Fecha: ${compra.fechaCompra.toLocal()}",
-                  style: GoogleFonts.orbitron(
-                      color: Colors.white54, fontSize: 18)),
-              const SizedBox(height: 12),
-              Text("Tipo de Compra: ${compra.tipoCompra}",
-                  style: GoogleFonts.orbitron(
+      builder:
+          (_) => Dialog(
+            backgroundColor: const Color(0xFF1A002B),
+            insetPadding: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  /// ---------------------------
+                  ///        QR CON LA ID
+                  /// ---------------------------
+                  Center(
+                    child: QrImageView(
+                      data: _generarJsonCompra(compra),
+                      size: 200,
+                      backgroundColor: Colors.white, // Hace que se vea mejor
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Text(
+                    "Compra #${compra.compraId}",
+                    style: GoogleFonts.orbitron(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  /// RESTO DE TU CONTENIDO ORIGINAL
+                  Text(
+                    compra.nombreBoliche,
+                    style: GoogleFonts.orbitron(
+                      color: Colors.white70,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Fecha: ${compra.fechaCompra.toLocal()}",
+                    style: GoogleFonts.orbitron(
+                      color: Colors.white54,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Tipo de Compra: ${compra.tipoCompra}",
+                    style: GoogleFonts.orbitron(
                       color: Colors.white,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              if (compra.manillasCompradas.isNotEmpty) ...[
-                Text("Manillas Compradas:",
-                    style: GoogleFonts.orbitron(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  if (compra.manillasCompradas.isNotEmpty) ...[
+                    Text(
+                      "Manillas Compradas:",
+                      style: GoogleFonts.orbitron(
                         color: Colors.white,
                         fontSize: 18,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                ...compra.manillasCompradas.map((m) => Text(
-                    "- ${m.nombreManilla} x${m.cantidad}",
-                    style: GoogleFonts.orbitron(
-                        color: Colors.white70, fontSize: 16))),
-                const SizedBox(height: 12),
-              ],
-              if (compra.combosComprados.isNotEmpty) ...[
-                Text("Combos Comprados:",
-                    style: GoogleFonts.orbitron(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...compra.manillasCompradas.map(
+                      (m) => Text(
+                        "- ${m.nombreManilla} x${m.cantidad}",
+                        style: GoogleFonts.orbitron(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  if (compra.combosComprados.isNotEmpty) ...[
+                    Text(
+                      "Combos Comprados:",
+                      style: GoogleFonts.orbitron(
                         color: Colors.white,
                         fontSize: 18,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                ...compra.combosComprados.map((c) => Text(
-                    "- ${c.nombreCombo} x${c.cantidad}",
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...compra.combosComprados.map(
+                      (c) => Text(
+                        "- ${c.nombreCombo} x${c.cantidad}",
+                        style: GoogleFonts.orbitron(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  if (compra.mesaReservada != null)
+                    Text(
+                      "Mesa Reservada: ${compra.mesaReservada}",
+                      style: GoogleFonts.orbitron(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    "Total Pagado: Bs ${compra.totalPagado.toStringAsFixed(2)}",
                     style: GoogleFonts.orbitron(
-                        color: Colors.white70, fontSize: 16))),
-                const SizedBox(height: 12),
-              ],
-              if (compra.mesaReservada != null)
-                Text("Mesa Reservada: ${compra.mesaReservada}",
-                    style: GoogleFonts.orbitron(
-                        color: Colors.white70, fontSize: 16)),
-              const SizedBox(height: 12),
-              Text("Total Pagado: Bs ${compra.totalPagado.toStringAsFixed(2)}",
-                  style: GoogleFonts.orbitron(
                       color: Colors.greenAccent,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    compra.estaActiva ? Icons.check_circle : Icons.cancel,
-                    color: compra.estaActiva
-                        ? Colors.lightBlueAccent
-                        : Colors.redAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    compra.estaActiva ? "Activa" : "Cancelada",
-                    style: GoogleFonts.orbitron(
-                        color: compra.estaActiva
-                            ? Colors.lightBlueAccent
-                            : Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        compra.estaActiva ? Icons.check_circle : Icons.cancel,
+                        color:
+                            compra.estaActiva
+                                ? Colors.lightBlueAccent
+                                : Colors.redAccent,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        compra.estaActiva ? "Activa" : "Cancelada",
+                        style: GoogleFonts.orbitron(
+                          color:
+                              compra.estaActiva
+                                  ? Colors.lightBlueAccent
+                                  : Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purpleAccent,
+                    ),
+                    child: Text("Cerrar", style: GoogleFonts.orbitron()),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.center,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.purpleAccent),
-                  child: Text("Cerrar", style: GoogleFonts.orbitron()),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
+  }
+
+  String _generarJsonCompra(DetalleCompraDto compra) {
+    final data = {
+      "id": compra.compraId,
+      "boliche": compra.nombreBoliche,
+      "fecha": compra.fechaCompra.toIso8601String(),
+      "tipoCompra": compra.tipoCompra,
+      "manillas":
+          compra.manillasCompradas
+              .map((m) => {"nombre": m.nombreManilla, "cantidad": m.cantidad})
+              .toList(),
+      "combos":
+          compra.combosComprados
+              .map((c) => {"nombre": c.nombreCombo, "cantidad": c.cantidad})
+              .toList(),
+      "mesa": compra.mesaReservada,
+      "total": compra.totalPagado,
+      "estado": compra.estaActiva ? "Activa" : "Cancelada",
+    };
+
+    return jsonEncode(data);
   }
 
   @override
@@ -151,7 +240,8 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(
-                child: CircularProgressIndicator(color: Colors.white));
+              child: CircularProgressIndicator(color: Colors.white),
+            );
           }
 
           final compras = snapshot.data!;
@@ -160,8 +250,7 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
             return Center(
               child: Text(
                 "No tienes compras aún ✨",
-                style: GoogleFonts.orbitron(
-                    color: Colors.white, fontSize: 20),
+                style: GoogleFonts.orbitron(color: Colors.white, fontSize: 20),
               ),
             );
           }
@@ -171,13 +260,15 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
             itemCount: compras.length,
             itemBuilder: (context, index) {
               final compra = compras[index];
-              final gradientColors = compra.estaActiva
-                  ? [Color(0xFF2D014F), Color(0xFF3D025F)]
-                  : [
-                      Colors.redAccent.withOpacity(0.7),
-                      Colors.redAccent.withOpacity(0.4)
-                    ];
-              final textColor = compra.estaActiva ? Colors.white : Colors.red[900];
+              final gradientColors =
+                  compra.estaActiva
+                      ? [Color(0xFF2D014F), Color(0xFF3D025F)]
+                      : [
+                        Colors.redAccent.withOpacity(0.7),
+                        Colors.redAccent.withOpacity(0.4),
+                      ];
+              final textColor =
+                  compra.estaActiva ? Colors.white : Colors.red[900];
 
               return Container(
                 margin: const EdgeInsets.symmetric(vertical: 6),
@@ -198,7 +289,10 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
                   title: Text(
                     "Compra #${compra.compraId}",
                     style: GoogleFonts.orbitron(
-                        color: textColor, fontWeight: FontWeight.bold, fontSize: 18),
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,24 +301,35 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
                       Text(
                         compra.nombreBoliche,
                         style: GoogleFonts.orbitron(
-                            color: textColor?.withOpacity(0.8), fontSize: 16),
+                          color: textColor?.withOpacity(0.8),
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         "Total: Bs ${compra.totalPagado.toStringAsFixed(2)}",
                         style: GoogleFonts.orbitron(
-                            color: compra.estaActiva
-                                ? Colors.greenAccent
-                                : Colors.redAccent,
-                            fontWeight: FontWeight.bold),
+                          color:
+                              compra.estaActiva
+                                  ? Colors.greenAccent
+                                  : Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
-                  trailing: Icon(
-                    compra.estaActiva ? Icons.check_circle : Icons.cancel,
-                    color: compra.estaActiva ? Colors.lightBlueAccent : Colors.redAccent,
-                    size: 28,
-                  ),
+                  trailing:
+                      compra.estaActiva
+                          ? QrImageView(
+                            data: _generarJsonCompra(compra),
+                            size: 70,
+                            backgroundColor: Colors.white,
+                          )
+                          : Icon(
+                            Icons.cancel,
+                            color: Colors.redAccent,
+                            size: 28,
+                          ),
                 ),
               );
             },

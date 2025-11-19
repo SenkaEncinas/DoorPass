@@ -1,5 +1,6 @@
 import 'package:doorpass/models/Auth/RegistroDto.dart';
 import 'package:doorpass/screens/LoginScreen.dart';
+import 'package:doorpass/screens/User/UserHomeScreen.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'package:intl/intl.dart';
@@ -27,7 +28,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final today = DateTime.now();
     int years = today.year - birthday.year;
     if (today.month < birthday.month ||
-        (today.month == birthday.month && today.day < birthday.day)) years--;
+        (today.month == birthday.month && today.day < birthday.day))
+      years--;
     return years >= 18;
   }
 
@@ -41,18 +43,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       initialDate: initial,
       firstDate: first,
       lastDate: last,
-      builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: Colors.purpleAccent,
-            onSurface: Colors.white,
+      builder:
+          (context, child) => Theme(
+            data: ThemeData.dark().copyWith(
+              colorScheme: const ColorScheme.dark(
+                primary: Colors.purpleAccent,
+                onSurface: Colors.white,
+              ),
+            ),
+            child: child!,
           ),
-        ),
-        child: child!,
-      ),
     );
 
-    if (picked != null) _birthdayCtrl.text = DateFormat('yyyy-MM-dd').format(picked);
+    if (picked != null) {
+      _birthdayCtrl.text = DateFormat('yyyy-MM-dd').format(picked);
+    }
   }
 
   Future<void> _register() async {
@@ -79,7 +84,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _loading = false);
 
     if (result != null) {
-      Navigator.pushReplacementNamed(context, '/main');
+      // Navegación directa a UserHomeScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const UserHomeScreen()),
+      );
     } else {
       setState(() => _error = "No se pudo registrar. Inténtalo nuevamente.");
     }
@@ -130,8 +139,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ingrese su nombre' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Ingrese su nombre'
+                              : null,
                 ),
                 const SizedBox(height: 20),
 
@@ -150,8 +162,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ingrese su correo' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Ingrese su correo'
+                              : null,
                 ),
                 const SizedBox(height: 20),
 
@@ -170,8 +185,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  validator: (value) =>
-                      value == null || value.length < 6 ? 'Mínimo 6 caracteres' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.length < 6
+                              ? 'Mínimo 6 caracteres'
+                              : null,
                 ),
                 const SizedBox(height: 20),
 
@@ -191,8 +209,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   onTap: _pickBirthday,
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Seleccione su fecha de nacimiento' : null,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Seleccione su fecha de nacimiento'
+                              : null,
                 ),
                 const SizedBox(height: 30),
 
@@ -204,27 +225,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 if (_error != null) const SizedBox(height: 8),
 
                 _loading
-                    ? const CircularProgressIndicator(color: Colors.purpleAccent)
+                    ? const CircularProgressIndicator(
+                      color: Colors.purpleAccent,
+                    )
                     : SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _register,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purpleAccent,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purpleAccent,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                          child: Text(
-                            'Registrarme',
-                            style: GoogleFonts.orbitron(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ),
+                        child: Text(
+                          'Registrarme',
+                          style: GoogleFonts.orbitron(
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
+                    ),
                 const SizedBox(height: 16),
 
                 TextButton(
