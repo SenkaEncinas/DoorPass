@@ -11,6 +11,14 @@ import 'package:doorpass/services/productos_service.dart';
 import 'package:doorpass/services/compras_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// CONSTANTES
+import 'package:doorpass/screens/constants/app_colors.dart';
+import 'package:doorpass/screens/constants/app_gradients.dart';
+import 'package:doorpass/screens/constants/app_text_styles.dart';
+import 'package:doorpass/screens/constants/app_spacing.dart';
+import 'package:doorpass/screens/constants/app_radius.dart';
+import 'package:doorpass/screens/constants/app_shadows.dart';
+
 class ComprasScreen extends StatefulWidget {
   final int bolicheId;
   final String bolicheNombre;
@@ -119,9 +127,10 @@ class _ComprasScreenState extends State<ComprasScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        backgroundColor: AppColors.primaryAccent,
         content: Text(
           'Compra realizada con éxito',
-          style: GoogleFonts.orbitron(),
+          style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
         ),
       ),
     );
@@ -130,22 +139,28 @@ class _ComprasScreenState extends State<ComprasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF100018),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: AppColors.appBar,
+        centerTitle: true,
+        elevation: 4,
+        shadowColor: AppColors.primaryAccent.withOpacity(0.4),
+        iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           'Compras - ${widget.bolicheNombre}',
-          style: GoogleFonts.orbitron(),
+          style: AppTextStyles.titleSection.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: 18,
+          ),
         ),
-        backgroundColor: const Color(0xFF6A0DAD),
-        centerTitle: true,
       ),
       body:
           loading
               ? const Center(
-                child: CircularProgressIndicator(color: Colors.purpleAccent),
+                child: CircularProgressIndicator(color: AppColors.progress),
               )
               : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -162,16 +177,14 @@ class _ComprasScreenState extends State<ComprasScreen> {
                                       cantidad: carritoManillas[m.id]!,
                                       onAdd:
                                           () => setState(
-                                            () =>
-                                                carritoManillas[m.id] =
-                                                    carritoManillas[m.id]! + 1,
+                                            () => carritoManillas[m.id] =
+                                                carritoManillas[m.id]! + 1,
                                           ),
                                       onRemove: () {
                                         if (carritoManillas[m.id]! > 0) {
                                           setState(
-                                            () =>
-                                                carritoManillas[m.id] =
-                                                    carritoManillas[m.id]! - 1,
+                                            () => carritoManillas[m.id] =
+                                                carritoManillas[m.id]! - 1,
                                           );
                                         }
                                       },
@@ -179,7 +192,8 @@ class _ComprasScreenState extends State<ComprasScreen> {
                                   )
                                   .toList(),
                         ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: AppSpacing.xxl),
+
                     _seccionTitulo('Mesas'),
                     mesas.isEmpty
                         ? _outOfStock()
@@ -187,21 +201,25 @@ class _ComprasScreenState extends State<ComprasScreen> {
                           children:
                               mesas
                                   .map(
-                                    (mesa) => Card(
-                                      color: const Color(
-                                        0xFF2D014F,
-                                      ).withOpacity(0.9),
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 6,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                    (mesa) => Container(
+                                      margin:
+                                          const EdgeInsets.symmetric(
+                                            vertical: AppSpacing.xs,
+                                          ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            AppColors.card.withOpacity(0.9),
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.card,
+                                        ),
+                                        boxShadow: AppShadows.softCard,
                                       ),
                                       child: CheckboxListTile(
                                         title: Text(
                                           '${mesa.nombreONumero} - Bs. ${mesa.precioReserva}',
-                                          style: GoogleFonts.orbitron(
-                                            color: Colors.white,
+                                          style: AppTextStyles.body.copyWith(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 15,
                                           ),
                                         ),
                                         value: mesasSeleccionadas[mesa.id],
@@ -211,51 +229,43 @@ class _ComprasScreenState extends State<ComprasScreen> {
                                                   mesasSeleccionadas[mesa.id] =
                                                       v ?? false,
                                             ),
-                                        activeColor: Colors.purpleAccent,
-                                        checkColor: Colors.white,
+                                        activeColor: AppColors.primaryAccent,
+                                        checkColor: AppColors.textPrimary,
                                       ),
                                     ),
                                   )
                                   .toList(),
                         ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: AppSpacing.xxl),
+
                     _seccionTitulo('Combos'),
                     combos.isEmpty
                         ? _outOfStock()
                         : Column(
                           children: combos.map((c) => _comboCard(c)).toList(),
                         ),
-                    const SizedBox(height: 40),
+
+                    const SizedBox(height: AppSpacing.xxl),
+
                     Text(
-                      'Total Ítems: $totalItems',
-                      style: GoogleFonts.orbitron(
-                        color: Colors.white,
+                      'Total ítems: $totalItems',
+                      style: AppTextStyles.titleSection.copyWith(
                         fontSize: 18,
                       ),
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: AppSpacing.md),
+
                     Center(
-                      child: ElevatedButton(
-                        onPressed: totalItems == 0 ? null : _comprar,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purpleAccent,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 70,
-                            vertical: 18,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Comprar',
-                          style: GoogleFonts.orbitron(
-                            color: Colors.white,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
+                      child: totalItems == 0
+                          ? Text(
+                              'Agrega productos para continuar',
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.textMuted,
+                              ),
+                            )
+                          : _botonComprar(),
                     ),
+                    const SizedBox(height: AppSpacing.lg),
                   ],
                 ),
               ),
@@ -263,17 +273,57 @@ class _ComprasScreenState extends State<ComprasScreen> {
   }
 
   Widget _seccionTitulo(String titulo) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
     child: Text(
       titulo,
-      style: GoogleFonts.orbitron(color: Colors.white, fontSize: 22),
+      style: AppTextStyles.titleSection.copyWith(fontSize: 22),
     ),
   );
 
-  Widget _outOfStock() => Text(
-    'OUT OF STOCK',
-    style: GoogleFonts.orbitron(color: Colors.redAccent, fontSize: 16),
+  Widget _outOfStock() => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    child: Text(
+      'OUT OF STOCK',
+      style: AppTextStyles.body.copyWith(
+        color: Colors.redAccent,
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
   );
+
+  // 🔹 STEP PER REUTILIZABLE PARA CANTIDAD (MISMO DISEÑO EN MANILLAS Y COMBOS)
+  Widget _buildCantidadStepper({
+    required int cantidad,
+    required VoidCallback onAdd,
+    required VoidCallback onRemove,
+  }) {
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(
+            Icons.remove_circle,
+            color: Colors.redAccent,
+          ),
+          onPressed: onRemove,
+        ),
+        Text(
+          '$cantidad',
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(
+            Icons.add_circle,
+            color: Colors.greenAccent,
+          ),
+          onPressed: onAdd,
+        ),
+      ],
+    );
+  }
 
   Widget _itemCantidad({
     required String nombre,
@@ -282,34 +332,35 @@ class _ComprasScreenState extends State<ComprasScreen> {
     required VoidCallback onAdd,
     required VoidCallback onRemove,
   }) {
-    return Card(
-      color: const Color(0xFF2D014F).withOpacity(0.9),
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: AppColors.card.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.softCard,
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.md,
+          horizontal: AppSpacing.lg,
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '$nombre - Bs. $precio',
-              style: GoogleFonts.orbitron(color: Colors.white, fontSize: 16),
+            Expanded(
+              child: Text(
+                '$nombre - Bs. ${precio.toStringAsFixed(2)}',
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 15,
+                ),
+              ),
             ),
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove, color: Colors.redAccent),
-                  onPressed: onRemove,
-                ),
-                Text(
-                  '$cantidad',
-                  style: GoogleFonts.orbitron(color: Colors.white),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add, color: Colors.greenAccent),
-                  onPressed: onAdd,
-                ),
-              ],
+            const SizedBox(width: AppSpacing.sm),
+            _buildCantidadStepper(
+              cantidad: cantidad,
+              onAdd: onAdd,
+              onRemove: onRemove,
             ),
           ],
         ),
@@ -318,19 +369,21 @@ class _ComprasScreenState extends State<ComprasScreen> {
   }
 
   Widget _comboCard(DetalleComboDto c) {
-    return Card(
-      color: const Color(0xFF2D014F).withOpacity(0.9),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: AppColors.card.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.softCard,
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (c.imagenUrl != null && c.imagenUrl!.isNotEmpty)
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.button),
                 child: Image.network(
                   c.imagenUrl!,
                   width: 80,
@@ -340,7 +393,12 @@ class _ComprasScreenState extends State<ComprasScreen> {
                       (_, __, ___) => Container(
                         width: 80,
                         height: 80,
-                        color: Colors.grey[800],
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800],
+                          borderRadius: BorderRadius.circular(
+                            AppRadius.button,
+                          ),
+                        ),
                         child: const Icon(
                           Icons.image_not_supported,
                           color: Colors.white70,
@@ -354,21 +412,19 @@ class _ComprasScreenState extends State<ComprasScreen> {
                 height: 80,
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.button),
                 ),
                 child: const Icon(Icons.image, color: Colors.white70),
               ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     c.nombre,
-                    style: GoogleFonts.orbitron(
-                      color: Colors.white,
+                    style: AppTextStyles.titleSection.copyWith(
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   if (c.descripcion != null && c.descripcion!.isNotEmpty)
@@ -377,16 +433,16 @@ class _ComprasScreenState extends State<ComprasScreen> {
                       child: Text(
                         c.descripcion!,
                         style: GoogleFonts.orbitron(
-                          color: Colors.white70,
+                          color: AppColors.textMuted,
                           fontSize: 14,
                         ),
                       ),
                     ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Bs. ${c.precio.toStringAsFixed(2)}',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.purpleAccent,
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textSecondary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -394,37 +450,50 @@ class _ComprasScreenState extends State<ComprasScreen> {
                 ],
               ),
             ),
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.remove_circle,
-                    color: Colors.redAccent,
+            _buildCantidadStepper(
+              cantidad: carritoCombos[c.id]!,
+              onAdd:
+                  () => setState(
+                    () => carritoCombos[c.id] = carritoCombos[c.id]! + 1,
                   ),
-                  onPressed: () {
-                    if (carritoCombos[c.id]! > 0)
-                      setState(
-                        () => carritoCombos[c.id] = carritoCombos[c.id]! - 1,
-                      );
-                  },
-                ),
-                Text(
-                  '${carritoCombos[c.id]}',
-                  style: GoogleFonts.orbitron(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add_circle, color: Colors.greenAccent),
-                  onPressed:
-                      () => setState(
-                        () => carritoCombos[c.id] = carritoCombos[c.id]! + 1,
-                      ),
-                ),
-              ],
+              onRemove: () {
+                if (carritoCombos[c.id]! > 0) {
+                  setState(
+                    () => carritoCombos[c.id] = carritoCombos[c.id]! - 1,
+                  );
+                }
+              },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _botonComprar() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        boxShadow: AppShadows.softCard,
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        onTap: totalItems == 0 ? null : _comprar,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 70,
+            vertical: 18,
+          ),
+          child: Text(
+            'Comprar',
+            style: TextStyle(
+              fontFamily: 'Orbitron',
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ),
     );

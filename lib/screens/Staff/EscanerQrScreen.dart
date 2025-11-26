@@ -1,12 +1,20 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'dart:html' as html;
+import 'dart:html' as html; // si no lo usas en nada más, luego se puede quitar
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
 import 'package:jsqr/jsqr.dart';
 import 'dart:ui' as ui;
+
+// CONSTANTES
+import 'package:doorpass/screens/constants/app_colors.dart';
+import 'package:doorpass/screens/constants/app_gradients.dart';
+import 'package:doorpass/screens/constants/app_text_styles.dart';
+import 'package:doorpass/screens/constants/app_spacing.dart';
+import 'package:doorpass/screens/constants/app_radius.dart';
+import 'package:doorpass/screens/constants/app_shadows.dart';
 
 class EscanerQrScreen extends StatefulWidget {
   const EscanerQrScreen({super.key});
@@ -58,13 +66,15 @@ class _EscanerQrScreenState extends State<EscanerQrScreen> {
       if (!mounted) return;
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ResultadoQrScreen(data: data)),
+        MaterialPageRoute(
+          builder: (_) => ResultadoQrScreen(data: data),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("QR inválido: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("QR inválido: $e")),
+      );
     }
 
     setState(() => _procesando = false);
@@ -84,21 +94,97 @@ class _EscanerQrScreenState extends State<EscanerQrScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.purple,
-        title: const Text("Escanear QR"),
+        backgroundColor: AppColors.appBar,
+        centerTitle: true,
+        elevation: 4,
+        shadowColor: AppColors.primaryAccent.withOpacity(0.4),
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          "Escanear QR",
+          style: AppTextStyles.titleSection.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: 18,
+          ),
+        ),
       ),
       body: Center(
-        child: ElevatedButton(
-          onPressed: _seleccionarArchivo,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.purpleAccent,
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Icono grande de QR
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.card.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  boxShadow: AppShadows.softCard,
+                ),
+                child: const Icon(
+                  Icons.qr_code_2,
+                  size: 80,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                "Selecciona una imagen con código QR\ny validaremos la entrada.",
+                textAlign: TextAlign.center,
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              // Botón principal (gradiente)
+              _primaryButton(
+                text: _procesando ? "Procesando..." : "Seleccionar QR",
+                onTap: _procesando ? null : _seleccionarArchivo,
+              ),
+            ],
           ),
-          child: Text(
-            _procesando ? "Procesando..." : "Seleccionar QR",
-            style: const TextStyle(fontSize: 18, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  Widget _primaryButton({
+    required String text,
+    VoidCallback? onTap,
+  }) {
+    final isDisabled = onTap == null;
+    return Opacity(
+      opacity: isDisabled ? 0.6 : 1,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary,
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          boxShadow: AppShadows.softCard,
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          onTap: onTap,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.md,
+            ),
+            child: Center(
+              child: Text(
+                // El texto se setea desde el botón padre con Orbitron en el theme general
+                'Seleccionar QR',
+                style: TextStyle(
+                  fontFamily: 'Orbitron',
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -113,15 +199,56 @@ class ResultadoQrScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final prettyJson = const JsonEncoder.withIndent("  ").convert(data);
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Resultado del QR")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Text(
-            const JsonEncoder.withIndent("  ").convert(data),
-            style: const TextStyle(fontSize: 16),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.appBar,
+        centerTitle: true,
+        elevation: 4,
+        shadowColor: AppColors.primaryAccent.withOpacity(0.4),
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          "Resultado del QR",
+          style: AppTextStyles.titleSection.copyWith(
+            color: AppColors.textSecondary,
+            fontSize: 18,
           ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              "Datos decodificados",
+              style: AppTextStyles.titleSection.copyWith(fontSize: 16),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.card.withOpacity(0.98),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  boxShadow: AppShadows.softCard,
+                ),
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    prettyJson,
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontFamily: 'monospace',
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

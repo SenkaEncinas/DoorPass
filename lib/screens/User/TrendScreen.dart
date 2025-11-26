@@ -3,6 +3,14 @@ import 'package:doorpass/services/reddit_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// IMPORTS DE CONSTANTES (nueva ubicación)
+import 'package:doorpass/screens/constants/app_colors.dart';
+import 'package:doorpass/screens/constants/app_gradients.dart';
+import 'package:doorpass/screens/constants/app_text_styles.dart';
+import 'package:doorpass/screens/constants/app_spacing.dart';
+import 'package:doorpass/screens/constants/app_radius.dart';
+import 'package:doorpass/screens/constants/app_shadows.dart';
+
 class TrendsScreen extends StatefulWidget {
   const TrendsScreen({super.key});
 
@@ -36,20 +44,23 @@ class _TrendsScreenState extends State<TrendsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textStyleTitulo = GoogleFonts.orbitron(
-      color: Colors.white,
-      fontSize: 18,
-      fontWeight: FontWeight.bold,
-    );
-
     return Scaffold(
-      backgroundColor: const Color(0xFF100018),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2D014F),
-        title: Text('Tendencias • r/doorpass', style: textStyleTitulo),
+        backgroundColor: AppColors.appBar,
+        elevation: 4,
+        shadowColor: AppColors.primaryAccent.withOpacity(0.4),
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          'Tendencias • r/doorpass',
+          style: AppTextStyles.titleSection.copyWith(
+            fontSize: 18,
+            color: AppColors.textSecondary,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh),
             tooltip: "Refrescar",
             onPressed: _loadPosts,
           ),
@@ -72,11 +83,13 @@ class _TrendsScreenState extends State<TrendsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: Colors.purpleAccent),
-          const SizedBox(height: 16),
+          const CircularProgressIndicator(color: AppColors.progress),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             'Cargando publicaciones...',
-            style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -86,22 +99,22 @@ class _TrendsScreenState extends State<TrendsScreen> {
   Widget _buildEmpty() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.group_off, size: 64, color: Colors.purpleAccent),
-            const SizedBox(height: 16),
+            const Icon(
+              Icons.group_off,
+              size: 64,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               'No hay publicaciones en r/doorpass',
               textAlign: TextAlign.center,
-              style: GoogleFonts.orbitron(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.emptyState.copyWith(fontSize: 18),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _gradientButton(
               text: "Reintentar",
               onTap: _loadPosts,
@@ -114,96 +127,129 @@ class _TrendsScreenState extends State<TrendsScreen> {
 
   Widget _buildPostsList() {
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 12),
+      padding: const EdgeInsets.only(
+        top: AppSpacing.sm,
+        bottom: AppSpacing.lg,
+      ),
       itemCount: _posts.length,
-      itemBuilder: (_, index) => _buildPostItem(_posts[index]),
+      itemBuilder: (_, index) => _TrendsPostCard(post: _posts[index]),
     );
   }
 
-  // ----- POST ITEM -----
+  // ----- REUSABLE GRADIENT BUTTON -----
 
-  Widget _buildPostItem(RedditDto post) {
-    final textTitle = GoogleFonts.orbitron(
-      color: Colors.white,
-      fontSize: 15,
-      fontWeight: FontWeight.bold,
+  Widget _gradientButton({required String text, required VoidCallback onTap}) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        boxShadow: AppShadows.softCard,
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
+          child: Text(
+            text,
+            style: GoogleFonts.orbitron(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
     );
+  }
+}
 
-    final textNormal = GoogleFonts.orbitron(
-      color: Colors.purpleAccent,
-      fontSize: 13,
-    );
+/// ---- CARD INDIVIDUAL CON SPOILER / NSFW TAP-TO-REVEAL ----
 
-    return Card(
-      color: const Color(0xFF2D014F).withOpacity(0.85),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+class _TrendsPostCard extends StatefulWidget {
+  final RedditDto post;
+
+  const _TrendsPostCard({required this.post});
+
+  @override
+  State<_TrendsPostCard> createState() => _TrendsPostCardState();
+}
+
+class _TrendsPostCardState extends State<_TrendsPostCard> {
+  late bool _revealed;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.post;
+    // Si es NSFW o Spoiler => empieza oculto
+    _revealed = !(p.isNsfw || p.isSpoiler);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final post = widget.post;
+    final isSensitive = post.isNsfw || post.isSpoiler;
+
+    final String contentTypeLabel = post.isVideo
+        ? 'VIDEO'
+        : (post.isSelfPost ? 'TEXTO' : 'ENLACE');
+
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        vertical: AppSpacing.sm,
+        horizontal: AppSpacing.md,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.card.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.softCard,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildPostHeader(post),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(post.title, style: textTitle),
-                const SizedBox(height: 10),
 
-                if (post.selftext.isNotEmpty) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF100018),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.purpleAccent.shade200),
-                    ),
-                    child: Text(
-                      post.selftext,
-                      style: textNormal.copyWith(
-                        color: Colors.white70,
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                _buildPostMetrics(post),
-              ],
-            ),
-          ),
+          // Si es sensible y NO está revelado => muestra overlay estilo Discord
+          if (isSensitive && !_revealed)
+            _buildSensitiveOverlay(post)
+          else
+            _buildPostBody(post, contentTypeLabel),
         ],
       ),
     );
   }
 
+  // ----- HEADER -----
+
   Widget _buildPostHeader(RedditDto post) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF3A0055),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(AppRadius.card),
+          topRight: Radius.circular(AppRadius.card),
         ),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: Colors.deepPurple[200],
+            backgroundColor: AppColors.background.withOpacity(0.9),
             radius: 16,
             child: Text(
               post.author.isNotEmpty ? post.author[0].toUpperCase() : 'U',
               style: GoogleFonts.orbitron(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,17 +257,29 @@ class _TrendsScreenState extends State<TrendsScreen> {
                 Text(
                   'u/${post.author}',
                   style: GoogleFonts.orbitron(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  _formatTimeAgo(post.created),
-                  style: GoogleFonts.orbitron(
-                    color: Colors.purpleAccent.shade100,
-                    fontSize: 11,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      'r/${post.subreddit}',
+                      style: GoogleFonts.orbitron(
+                        color: AppColors.textPrimary.withOpacity(0.9),
+                        fontSize: 10,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '• ${_formatTimeAgo(post.created)}',
+                      style: GoogleFonts.orbitron(
+                        color: AppColors.textPrimary.withOpacity(0.8),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -231,6 +289,185 @@ class _TrendsScreenState extends State<TrendsScreen> {
       ),
     );
   }
+
+  // ----- OVERLAY SPOILER / NSFW -----
+
+  Widget _buildSensitiveOverlay(RedditDto post) {
+    final isNsfw = post.isNsfw;
+    final isSpoiler = post.isSpoiler;
+
+    String title = 'Contenido sensible';
+    String subtitle = 'Toca para revelar';
+
+    if (isNsfw && isSpoiler) {
+      title = 'NSFW + Spoiler';
+      subtitle = 'Toca para revelar contenido';
+    } else if (isNsfw) {
+      title = '+18 • NSFW';
+      subtitle = 'Toca para revelar imagen / contenido';
+    } else if (isSpoiler) {
+      title = 'Spoiler';
+      subtitle = 'Toca para ver el contenido';
+    }
+
+    return InkWell(
+      onTap: () => setState(() => _revealed = true),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.85),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(AppRadius.card),
+            bottomRight: Radius.circular(AppRadius.card),
+          ),
+          border: Border.all(
+            color: Colors.redAccent.withOpacity(0.6),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.redAccent.shade200,
+              size: 32,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              title,
+              style: GoogleFonts.orbitron(
+                color: Colors.redAccent.shade200,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.orbitron(
+                color: AppColors.textMuted,
+                fontSize: 11,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: 6,
+              alignment: WrapAlignment.center,
+              children: [
+                if (isNsfw)
+                  _smallTag('NSFW'),
+                if (isSpoiler)
+                  _smallTag('Spoiler'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _smallTag(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.orbitron(
+          color: AppColors.textPrimary,
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // ----- BODY NORMAL (YA REVELADO) -----
+
+  Widget _buildPostBody(RedditDto post, String contentTypeLabel) {
+    final textTitle = AppTextStyles.titleSection.copyWith(
+      fontSize: 15,
+    );
+
+    final textNormal = AppTextStyles.body.copyWith(
+      fontSize: 13,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.lg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Imagen solo si hay URL y no es video
+          if (post.fullImageUrl.isNotEmpty && !post.isVideo)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.button),
+                child: Image.network(
+                  post.fullImageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 160,
+                    color: Colors.black26,
+                    alignment: Alignment.center,
+                    child: Text(
+                      'No se pudo cargar la imagen',
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          Text(post.title, style: textTitle),
+          const SizedBox(height: AppSpacing.sm),
+
+          if (post.selftext.isNotEmpty) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(AppRadius.button),
+                border: Border.all(
+                  color: AppColors.primaryAccent.withOpacity(0.4),
+                ),
+              ),
+              child: Text(
+                post.selftext,
+                style: textNormal.copyWith(
+                  color: AppColors.textMuted,
+                  height: 1.35,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+
+          _buildPostMetrics(post, contentTypeLabel),
+        ],
+      ),
+    );
+  }
+
+  // ----- BADGES EN EL HEADER -----
 
   Widget _buildPostBadges(RedditDto post) {
     return Wrap(
@@ -250,21 +487,26 @@ class _TrendsScreenState extends State<TrendsScreen> {
             Colors.amberAccent,
           ),
 
+        if (post.isNsfw)
+          _buildBadge(Icons.warning_amber_rounded, 'NSFW', Colors.redAccent),
+
+        if (post.isSpoiler)
+          _buildBadge(Icons.visibility_off, 'Spoiler', Colors.orangeAccent),
+
         if (post.flair.isNotEmpty)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7C4DFF), Color(0xFFE040FB)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
+              gradient: AppGradients.primary,
+              borderRadius: BorderRadius.circular(AppRadius.button),
             ),
             child: Text(
               post.flair,
               style: GoogleFonts.orbitron(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
               ),
@@ -276,7 +518,10 @@ class _TrendsScreenState extends State<TrendsScreen> {
 
   Widget _buildBadge(IconData icon, String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(10),
@@ -300,13 +545,15 @@ class _TrendsScreenState extends State<TrendsScreen> {
     );
   }
 
-  Widget _buildPostMetrics(RedditDto post) {
+  // ----- MÉTRICAS -----
+
+  Widget _buildPostMetrics(RedditDto post, String contentTypeLabel) {
     return Row(
       children: [
         _metric(Icons.arrow_upward, '${post.upvotes}', 'Upvotes'),
-        const SizedBox(width: 14),
+        const SizedBox(width: AppSpacing.md),
         _metric(Icons.comment, '${post.comments}', 'Comentarios'),
-        const SizedBox(width: 14),
+        const SizedBox(width: AppSpacing.md),
         _metric(
           Icons.thumb_up,
           '${(post.upvoteRatio * 100).round()}%',
@@ -314,22 +561,27 @@ class _TrendsScreenState extends State<TrendsScreen> {
         ),
         const Spacer(),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.xs,
+          ),
           decoration: BoxDecoration(
             color: post.isSelfPost
                 ? Colors.greenAccent.withOpacity(0.10)
                 : Colors.lightBlueAccent.withOpacity(0.10),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: post.isSelfPost ? Colors.greenAccent : Colors.lightBlueAccent,
+              color:
+                  post.isSelfPost ? Colors.greenAccent : Colors.lightBlueAccent,
             ),
           ),
           child: Text(
-            post.isSelfPost ? 'TEXTO' : 'ENLACE',
+            contentTypeLabel,
             style: GoogleFonts.orbitron(
               fontSize: 9,
               fontWeight: FontWeight.bold,
-              color: post.isSelfPost ? Colors.greenAccent : Colors.lightBlueAccent,
+              color:
+                  post.isSelfPost ? Colors.greenAccent : Colors.lightBlueAccent,
             ),
           ),
         ),
@@ -343,12 +595,12 @@ class _TrendsScreenState extends State<TrendsScreen> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 15, color: Colors.purpleAccent),
+            Icon(icon, size: 15, color: AppColors.textSecondary),
             const SizedBox(width: 4),
             Text(
               value,
               style: GoogleFonts.orbitron(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
@@ -359,41 +611,11 @@ class _TrendsScreenState extends State<TrendsScreen> {
         Text(
           label,
           style: GoogleFonts.orbitron(
-            color: Colors.purpleAccent.shade100,
+            color: AppColors.textSecondary.withOpacity(0.7),
             fontSize: 9,
           ),
         ),
       ],
-    );
-  }
-
-  // ----- REUSABLE GRADIENT BUTTON (igual a tu estilo) -----
-
-  Widget _gradientButton({required String text, required VoidCallback onTap}) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7C4DFF), Color(0xFFE040FB)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-          child: Text(
-            text,
-            style: GoogleFonts.orbitron(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
     );
   }
 

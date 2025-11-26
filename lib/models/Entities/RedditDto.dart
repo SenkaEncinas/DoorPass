@@ -45,6 +45,28 @@ class RedditDto {
     required this.flair,
   });
 
+  /// ---- Helpers para la UI ----
+
+  bool get hasText => selftext.trim().isNotEmpty;
+
+  /// Hay imagen “grande” asociada (no video)
+  bool get hasImage => fullImageUrl.trim().isNotEmpty && !isVideo;
+
+  /// Thumbnail válido (a veces Reddit manda 'self', 'default', etc.)
+  bool get hasThumbnail =>
+      thumbnail.trim().isNotEmpty &&
+      (thumbnail.startsWith('http://') || thumbnail.startsWith('https://'));
+
+  /// El post tiene algún tipo de advertencia
+  bool get hasWarning => isNsfw || isSpoiler;
+
+  /// Texto corto para tipo de contenido
+  String get contentTypeLabel {
+    if (isVideo) return 'VIDEO';
+    if (isSelfPost) return 'TEXTO';
+    return 'ENLACE';
+  }
+
   factory RedditDto.fromJson(Map<String, dynamic> json) {
     return RedditDto(
       // Información básica
@@ -63,7 +85,7 @@ class RedditDto {
       thumbnail: json['thumbnail'] ?? '',
       fullImageUrl: json['url_overridden_by_dest'] ?? '',
       isSelfPost: json['is_self'] ?? false,
-      upvoteRatio: json['upvote_ratio'] ?? 0.0,
+      upvoteRatio: (json['upvote_ratio'] ?? 0.0).toDouble(),
       totalAwards: json['total_awards_received'] ?? 0,
       isVideo: json['is_video'] ?? false,
       isNsfw: json['over_18'] ?? false,
@@ -73,3 +95,4 @@ class RedditDto {
     );
   }
 }
+        

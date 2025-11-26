@@ -8,6 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'HistorialComprasScreen.dart' hide ComprasScreen;
 
+// NUEVAS IMPORTACIONES DE CONSTANTES
+import 'package:doorpass/screens/constants/app_colors.dart';
+import 'package:doorpass/screens/constants/app_gradients.dart';
+import 'package:doorpass/screens/constants/app_text_styles.dart';
+import 'package:doorpass/screens/constants/app_spacing.dart';
+import 'package:doorpass/screens/constants/app_radius.dart';
+import 'package:doorpass/screens/constants/app_shadows.dart';
+
 class UserHomeScreen extends StatefulWidget {
   const UserHomeScreen({super.key});
 
@@ -59,38 +67,34 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF100018),
+      backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.modalTop),
+        ),
       ),
-      builder:
-          (context) => DraggableScrollableSheet(
-            expand: false,
-            initialChildSize: 0.8,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
-            builder:
-                (_, scrollController) => SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(16),
-                  child: _detalleContenido(detalle),
-                ),
-          ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.8,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (_, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: _detalleContenido(detalle),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _detalleContenido(DetalleBolicheDto detalle) {
-    final textStyleTitulo = GoogleFonts.orbitron(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-    );
-    final textStyleNormal = GoogleFonts.orbitron(color: Colors.purpleAccent);
-    final textStyleNombre = GoogleFonts.orbitron(
-      color: Colors.white,
-      fontSize: 26,
-      fontWeight: FontWeight.bold,
-    );
+    final textStyleTitulo = AppTextStyles.titleSection;
+    final textStyleNormal = AppTextStyles.body;
+    final textStyleNombre = AppTextStyles.titleLarge;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +102,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         if (detalle.imagenUrl != null && detalle.imagenUrl!.isNotEmpty)
           Center(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.image),
               child: Image.network(
                 detalle.imagenUrl!,
                 height: 200,
@@ -106,45 +110,56 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               ),
             ),
           ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(detalle.nombre, style: textStyleNombre),
-        const SizedBox(height: 8),
-        Text(detalle.direccion ?? '', style: textStyleNormal),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.sm),
+        if (detalle.direccion != null && detalle.direccion!.isNotEmpty)
+          Text(detalle.direccion!, style: textStyleNormal),
+        const SizedBox(height: AppSpacing.lg),
 
         if (detalle.manillas.isNotEmpty) ...[
           Text('Manillas:', style: textStyleTitulo),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.xs),
           ...detalle.manillas.map(
-            (m) => Text('${m.nombre}: Bs. ${m.precio}', style: textStyleNormal),
+            (m) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Text(
+                '${m.nombre}: Bs. ${m.precio}',
+                style: textStyleNormal,
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
         ],
 
         if (detalle.mesas.isNotEmpty) ...[
           Text('Mesas:', style: textStyleTitulo),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.xs),
           ...detalle.mesas.map(
-            (m) => Text(
-              '${m.nombreONumero}: Bs. ${m.precioReserva}',
-              style: textStyleNormal,
+            (m) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Text(
+                '${m.nombreONumero}: Bs. ${m.precioReserva}',
+                style: textStyleNormal,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
         ],
 
         if (detalle.combos.isNotEmpty) ...[
           Text('Combos:', style: textStyleTitulo),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.xs),
           ...detalle.combos.map(
-            (c) => Card(
-              color: const Color(0xFF3A0055),
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            (c) => Container(
+              margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: AppColors.comboCard,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                boxShadow: AppShadows.softCard,
               ),
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -158,41 +173,38 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         child: Text(
                           c.descripcion!,
                           style: textStyleNormal.copyWith(
-                            color: Colors.white70,
+                            color: AppColors.textMuted,
                             fontStyle: FontStyle.italic,
                           ),
                         ),
                       ),
+                    const SizedBox(height: AppSpacing.sm),
                     Text('Precio: Bs. ${c.precio}', style: textStyleNormal),
                   ],
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
         ],
 
         Center(
           child: Container(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7C4DFF), Color(0xFFE040FB)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
+              gradient: AppGradients.primary,
+              borderRadius: BorderRadius.circular(AppRadius.button),
+              boxShadow: AppShadows.softCard,
             ),
             child: InkWell(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.button),
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (_) => ComprasScreen(
-                          bolicheId: detalle.id,
-                          bolicheNombre: detalle.nombre,
-                        ),
+                    builder: (_) => ComprasScreen(
+                      bolicheId: detalle.id,
+                      bolicheNombre: detalle.nombre,
+                    ),
                   ),
                 );
               },
@@ -203,13 +215,13 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 ),
                 child: Text(
                   'Comprar 🎟️',
-                  style: textStyleNombre.copyWith(fontSize: 18),
+                  style: AppTextStyles.button.copyWith(fontSize: 18),
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSpacing.xxl),
       ],
     );
   }
@@ -219,31 +231,28 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     final isWide = MediaQuery.of(context).size.width > 700;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF100018),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2D014F),
+        backgroundColor: AppColors.appBar,
+        elevation: 4,
+        shadowColor: AppColors.primaryAccent.withOpacity(0.4),
         title: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFF7C4DFF).withOpacity(0.6),
-                const Color(0xFFE040FB).withOpacity(0.6),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
+            gradient: AppGradients.searchBar,
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           child: TextField(
             controller: _searchController,
-            style: GoogleFonts.orbitron(color: Colors.white),
+            style: AppTextStyles.searchText,
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               hintText: 'Buscar boliche...',
-              hintStyle: GoogleFonts.orbitron(
-                color: Colors.purpleAccent.shade100,
+              hintStyle: AppTextStyles.searchHint,
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textSecondary,
               ),
-              prefixIcon: const Icon(Icons.search, color: Colors.purpleAccent),
               border: InputBorder.none,
             ),
             onChanged: (value) => setState(() {}),
@@ -251,7 +260,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.trending_up, color: Colors.white),
+            icon: const Icon(Icons.trending_up, color: AppColors.textPrimary),
             tooltip: 'Tendencias',
             onPressed: () {
               Navigator.push(
@@ -260,9 +269,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               );
             },
           ),
-
           Padding(
-            padding: const EdgeInsets.only(right: 12.0),
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
             child: TextButton(
               onPressed: () {
                 Navigator.push(
@@ -274,16 +282,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               },
               child: Text(
                 "HISTORIAL DE COMPRAS",
-                style: GoogleFonts.orbitron(
-                  color: Colors.purpleAccent,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.historyButton,
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
+            icon: const Icon(Icons.logout, color: AppColors.textPrimary),
             tooltip: 'Cerrar sesión',
             onPressed: () {
               Navigator.pushReplacement(
@@ -295,66 +299,101 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         ],
       ),
       body: SafeArea(
-        child:
-            _loading
-                ? const Center(
-                  child: CircularProgressIndicator(color: Colors.purpleAccent),
-                )
-                : isWide
+        child: _loading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.progress,
+                ),
+              )
+            : isWide
                 ? Row(
-                  children: [
-                    _buildListaBoliches(isWide),
-                    Expanded(
-                      flex: 3,
-                      child:
-                          _seleccionado == null
-                              ? Center(
+                    children: [
+                      _buildListaBoliches(isWide),
+                      Expanded(
+                        flex: 3,
+                        child: _seleccionado == null
+                            ? Center(
                                 child: Text(
                                   'Selecciona un boliche 🎉',
-                                  style: GoogleFonts.orbitron(
-                                    color: Colors.purpleAccent,
+                                  style: AppTextStyles.emptyState.copyWith(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               )
-                              : SingleChildScrollView(
-                                padding: const EdgeInsets.all(16),
+                            : SingleChildScrollView(
+                                padding: const EdgeInsets.all(AppSpacing.lg),
                                 child: _detalleContenido(_seleccionado!),
                               ),
-                    ),
-                  ],
-                )
+                      ),
+                    ],
+                  )
                 : _buildListaBoliches(isWide),
       ),
     );
   }
 
   Widget _buildListaBoliches(bool isWide) {
-    final list = ListView.builder(
-      itemCount: boliches.length,
-      itemBuilder: (_, index) {
-        final b = boliches[index];
-        if (!b.nombre.toLowerCase().contains(
-          _searchController.text.toLowerCase(),
-        )) {
-          return const SizedBox.shrink();
-        }
+    // Filtramos una sola vez para poder mostrar estado vacío bonito
+    final query = _searchController.text.toLowerCase();
+    final filtered = boliches.where((b) {
+      return b.nombre.toLowerCase().contains(query);
+    }).toList();
 
-        return Card(
-          color: const Color(0xFF2D014F).withOpacity(0.85),
-          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+    if (filtered.isEmpty) {
+      final content = Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.music_note,
+              color: AppColors.textSecondary,
+              size: 48,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'No encontramos boliches con ese nombre',
+              style: AppTextStyles.emptyState,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+      return isWide ? Expanded(flex: 2, child: content) : content;
+    }
+
+    final list = ListView.builder(
+      itemCount: filtered.length,
+      itemBuilder: (_, index) {
+        final b = filtered[index];
+
+        final inicial =
+            b.nombre.isNotEmpty ? b.nombre[0].toUpperCase() : '?';
+
+        return Container(
+          margin: const EdgeInsets.symmetric(
+            vertical: AppSpacing.sm,
+            horizontal: AppSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.card.withOpacity(0.85),
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            boxShadow: AppShadows.softCard,
           ),
           child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: AppColors.primaryAccent.withOpacity(0.9),
+              child: Text(
+                inicial,
+                style: AppTextStyles.button.copyWith(fontSize: 14),
+              ),
+            ),
             title: Text(
               b.nombre,
-              style: GoogleFonts.orbitron(color: Colors.white),
+              style: GoogleFonts.orbitron(color: AppColors.textPrimary),
             ),
             subtitle: Text(
               b.direccion,
-              style: GoogleFonts.orbitron(color: Colors.purpleAccent),
+              style: AppTextStyles.subtitle,
             ),
             trailing: isWide ? null : _buildVerMasButton(b, isWide),
             onTap: () => _seleccionarBoliche(b, isWide),
@@ -369,22 +408,22 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   Widget _buildVerMasButton(DetalleBolicheSimpleDto b, bool isWide) {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7C4DFF), Color(0xFFE040FB)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(AppRadius.button),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         onTap: () => _seleccionarBoliche(b, isWide),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
           child: Text(
             'Ver más',
-            style: GoogleFonts.orbitron(
-              color: Colors.white,
+            style: TextStyle(
+              fontFamily: 'Orbitron',
+              color: AppColors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
