@@ -2,6 +2,7 @@ import 'package:doorpass/models/Productos/DetalleBolicheDto.dart';
 import 'package:doorpass/models/Productos/DetalleBolichesSimpleDto.dart';
 import 'package:doorpass/screens/LoginScreen.dart';
 import 'package:doorpass/screens/User/ComprasScreen.dart';
+import 'package:doorpass/screens/User/TrendScreen.dart';
 import 'package:doorpass/services/productos_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -249,6 +250,17 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.trending_up, color: Colors.white),
+            tooltip: 'Tendencias',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => TrendsScreen()),
+              );
+            },
+          ),
+
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
             child: TextButton(

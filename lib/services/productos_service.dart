@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ProductosService {
   final String _baseUrl =
-      'https://app-251117192144.azurewebsites.net/api/productos';
+      'https://app-251119212357.azurewebsites.net/api/productos';
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
