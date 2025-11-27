@@ -12,7 +12,7 @@ class RedditService {
       print('🔍 Obteniendo posts de r/doorpass...');
       
       final response = await http.get(
-        Uri.parse('$_proxyUrl${Uri.encodeFull('$_baseUrl/r/doorpass/hot.json?limit=20')}'),
+        Uri.parse('$_proxyUrl${Uri.encodeFull('$_baseUrl/r/doorpass /hot.json?limit=20')}'),
         headers: {'User-Agent': _userAgent},
       );
 

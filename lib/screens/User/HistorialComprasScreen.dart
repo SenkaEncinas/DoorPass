@@ -1,5 +1,9 @@
 import 'dart:convert';
 
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'dart:html' as html show AnchorElement, Blob, Url;
+
 import 'package:flutter/material.dart';
 import 'package:doorpass/services/compras_service.dart';
 import 'package:doorpass/models/Compras/DetalleCompraDto.dart';
@@ -31,47 +35,94 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
     _futureHistorial = _service.getMiHistorial();
   }
 
+  Future<void> _descargarQr(DetalleCompraDto compra) async {
+    try {
+      final painter = QrPainter(
+        data: _generarJsonCompra(compra),
+        version: QrVersions.auto,
+        gapless: true,
+        // colores del QR (negro sobre blanco)
+        eyeStyle: const QrEyeStyle(
+          eyeShape: QrEyeShape.square,
+          color: Colors.black,
+        ),
+        dataModuleStyle: const QrDataModuleStyle(
+          dataModuleShape: QrDataModuleShape.square,
+          color: Colors.black,
+        ),
+      );
+
+      final uiImageData = await painter.toImageData(
+        1024,
+        format: ui.ImageByteFormat.png,
+      );
+
+      if (uiImageData == null) return;
+
+      final bytes = uiImageData.buffer.asUint8List();
+
+      final blob = html.Blob([bytes], 'image/png');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      final anchor =
+          html.AnchorElement(href: url)
+            ..download = 'compra_${compra.compraId}.png'
+            ..click();
+
+      html.Url.revokeObjectUrl(url);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error al descargar el QR',
+            style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
   Future<void> _cancelarCompra(DetalleCompraDto compra) async {
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.appBar,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
-        ),
-        title: Text(
-          'Cancelar compra',
-          style: AppTextStyles.titleSection,
-        ),
-        content: Text(
-          '¿Seguro que quieres cancelar la compra #${compra.compraId}?',
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.textMuted,
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'No',
+      builder:
+          (_) => AlertDialog(
+            backgroundColor: AppColors.appBar,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.card),
+            ),
+            title: Text('Cancelar compra', style: AppTextStyles.titleSection),
+            content: Text(
+              '¿Seguro que quieres cancelar la compra #${compra.compraId}?',
               style: AppTextStyles.body.copyWith(
                 color: AppColors.textMuted,
+                fontSize: 14,
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              'Sí, cancelar',
-              style: AppTextStyles.body.copyWith(
-                color: Colors.redAccent,
-                fontWeight: FontWeight.bold,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(
+                  'No',
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
               ),
-            ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(
+                  'Sí, cancelar',
+                  style: AppTextStyles.body.copyWith(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirmar != true) return;
@@ -107,192 +158,212 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
     }
   }
 
-  void _mostrarDetalleCompra(DetalleCompraDto compra) {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: AppColors.appBar,
-        insetPadding: const EdgeInsets.all(AppSpacing.lg),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              /// QR CON LA INFO DE LA COMPRA
-              Center(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.textPrimary,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    boxShadow: AppShadows.softCard,
-                  ),
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: QrImageView(
-                    data: _generarJsonCompra(compra),
-                    size: 200,
-                    backgroundColor: Colors.white,
-                  ),
+void _mostrarDetalleCompra(DetalleCompraDto compra) {
+  showDialog(
+    context: context,
+    builder: (_) => Dialog(
+      backgroundColor: AppColors.appBar,
+      insetPadding: const EdgeInsets.all(AppSpacing.lg),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            /// QR CON LA INFO DE LA COMPRA
+            Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.textPrimary,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  boxShadow: AppShadows.softCard,
+                ),
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: QrImageView(
+                  data: _generarJsonCompra(compra),
+                  size: 200,
+                  backgroundColor: Colors.white,
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
+            ),
+            const SizedBox(height: AppSpacing.lg),
 
-              Text(
-                "Compra #${compra.compraId}",
-                style: AppTextStyles.titleLarge,
+            Text(
+              "Compra #${compra.compraId}",
+              style: AppTextStyles.titleLarge,
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            Text(
+              compra.nombreBoliche,
+              style: AppTextStyles.titleSection.copyWith(
+                color: AppColors.textMuted,
+                fontSize: 20,
               ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              "Fecha: ${compra.fechaCompra.toLocal()}",
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textMuted,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              "Tipo de Compra: ${compra.tipoCompra}",
+              style: AppTextStyles.titleSection,
+            ),
+            const SizedBox(height: AppSpacing.md),
 
-              const SizedBox(height: AppSpacing.md),
-
+            if (compra.manillasCompradas.isNotEmpty) ...[
               Text(
-                compra.nombreBoliche,
-                style: AppTextStyles.titleSection.copyWith(
-                  color: AppColors.textMuted,
-                  fontSize: 20,
-                ),
+                "Manillas Compradas:",
+                style: AppTextStyles.titleSection.copyWith(fontSize: 18),
               ),
               const SizedBox(height: AppSpacing.sm),
-              Text(
-                "Fecha: ${compra.fechaCompra.toLocal()}",
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.textMuted,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                "Tipo de Compra: ${compra.tipoCompra}",
-                style: AppTextStyles.titleSection,
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              if (compra.manillasCompradas.isNotEmpty) ...[
-                Text(
-                  "Manillas Compradas:",
-                  style: AppTextStyles.titleSection.copyWith(fontSize: 18),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                ...compra.manillasCompradas.map(
-                  (m) => Text(
-                    "- ${m.nombreManilla} x${m.cantidad}",
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.textPrimary.withOpacity(0.8),
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
-
-              if (compra.combosComprados.isNotEmpty) ...[
-                Text(
-                  "Combos Comprados:",
-                  style: AppTextStyles.titleSection.copyWith(fontSize: 18),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                ...compra.combosComprados.map(
-                  (c) => Text(
-                    "- ${c.nombreCombo} x${c.cantidad}",
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.textPrimary.withOpacity(0.8),
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
-
-              if (compra.mesaReservada != null)
-                Text(
-                  "Mesa Reservada: ${compra.mesaReservada}",
+              ...compra.manillasCompradas.map(
+                (m) => Text(
+                  "- ${m.nombreManilla} x${m.cantidad}",
                   style: AppTextStyles.body.copyWith(
                     color: AppColors.textPrimary.withOpacity(0.8),
                     fontSize: 16,
                   ),
                 ),
-
+              ),
               const SizedBox(height: AppSpacing.md),
+            ],
 
+            if (compra.combosComprados.isNotEmpty) ...[
               Text(
-                "Total Pagado: Bs ${compra.totalPagado.toStringAsFixed(2)}",
-                style: AppTextStyles.titleSection.copyWith(
-                  color: Colors.greenAccent,
+                "Combos Comprados:",
+                style: AppTextStyles.titleSection.copyWith(fontSize: 18),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              ...compra.combosComprados.map(
+                (c) => Text(
+                  "- ${c.nombreCombo} x${c.cantidad}",
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.textPrimary.withOpacity(0.8),
+                    fontSize: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
+            ],
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    compra.estaActiva ? Icons.check_circle : Icons.cancel,
-                    color:
-                        compra.estaActiva
-                            ? Colors.lightBlueAccent
-                            : Colors.redAccent,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    compra.estaActiva ? "Activa" : "Cancelada",
-                    style: AppTextStyles.titleSection.copyWith(
-                      color:
-                          compra.estaActiva
-                              ? Colors.lightBlueAccent
-                              : Colors.redAccent,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
+            if (compra.mesaReservada != null)
+              Text(
+                "Mesa Reservada: ${compra.mesaReservada}",
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.textPrimary.withOpacity(0.8),
+                  fontSize: 16,
+                ),
               ),
 
-              const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+            Text(
+              "Total Pagado: Bs ${compra.totalPagado.toStringAsFixed(2)}",
+              style: AppTextStyles.titleSection.copyWith(
+                color: Colors.greenAccent,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  compra.estaActiva ? Icons.check_circle : Icons.cancel,
+                  color: compra.estaActiva
+                      ? Colors.lightBlueAccent
+                      : Colors.redAccent,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  compra.estaActiva ? "Activa" : "Cancelada",
+                  style: AppTextStyles.titleSection.copyWith(
+                    color: compra.estaActiva
+                        ? Colors.lightBlueAccent
+                        : Colors.redAccent,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // CERRAR
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.button),
+                    ),
+                  ),
+                  child: Text(
+                    "Cerrar",
+                    style: AppTextStyles.button,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+
+                // DESCARGAR QR
+                ElevatedButton(
+                  onPressed: () => _descargarQr(compra),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.button),
+                    ),
+                  ),
+                  child: Text(
+                    "Descargar QR",
+                    style: AppTextStyles.button.copyWith(
+                      color: AppColors.appBar,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+
+                // CANCELAR COMPRA (solo si está activa)
+                if (compra.estaActiva)
                   ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _cancelarCompra(compra);
+                    },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryAccent,
+                      backgroundColor: Colors.redAccent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.button),
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.button),
                       ),
                     ),
                     child: Text(
-                      "Cerrar",
-                      style: AppTextStyles.button,
+                      "Cancelar compra",
+                      style: AppTextStyles.button.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  if (compra.estaActiva)
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _cancelarCompra(compra);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.button),
-                        ),
-                      ),
-                      child: Text(
-                        "Cancelar compra",
-                        style: AppTextStyles.button.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   String _generarJsonCompra(DetalleCompraDto compra) {
     final data = {
@@ -302,21 +373,11 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
       "tipoCompra": compra.tipoCompra,
       "manillas":
           compra.manillasCompradas
-              .map(
-                (m) => {
-                  "nombre": m.nombreManilla,
-                  "cantidad": m.cantidad,
-                },
-              )
+              .map((m) => {"nombre": m.nombreManilla, "cantidad": m.cantidad})
               .toList(),
       "combos":
           compra.combosComprados
-              .map(
-                (c) => {
-                  "nombre": c.nombreCombo,
-                  "cantidad": c.cantidad,
-                },
-              )
+              .map((c) => {"nombre": c.nombreCombo, "cantidad": c.cantidad})
               .toList(),
       "mesa": compra.mesaReservada,
       "total": compra.totalPagado,
@@ -351,9 +412,7 @@ class _HistorialComprasScreenState extends State<HistorialComprasScreen> {
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.progress,
-              ),
+              child: CircularProgressIndicator(color: AppColors.progress),
             );
           }
 

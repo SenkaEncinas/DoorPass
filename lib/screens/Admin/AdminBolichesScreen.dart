@@ -1,3 +1,4 @@
+import 'dart:typed_data'; // 👈 NUEVO
 import 'package:flutter/material.dart';
 import 'package:doorpass/models/Productos/DetalleBolichesSimpleDto.dart';
 import 'package:doorpass/screens/Admin/EdicionAdminBoliche.dart';
@@ -6,6 +7,8 @@ import 'package:doorpass/models/admin/CrearBolicheDto.dart';
 import 'package:doorpass/services/admin_service.dart';
 import 'package:doorpass/services/productos_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:file_picker/file_picker.dart'; // 👈 NUEVO
+import 'package:doorpass/services/cloudinary_service.dart'; // 👈 NUEVO
 
 // CONSTANTES
 import 'package:doorpass/screens/constants/app_colors.dart';
@@ -82,63 +85,43 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
         ],
       ),
       floatingActionButton: _buildFab(),
-      body:
-          _loading
-              ? const Center(
-                child: CircularProgressIndicator(color: AppColors.progress),
-              )
-              : RefreshIndicator(
-                color: AppColors.progress,
-                backgroundColor: AppColors.card,
-                onRefresh: _cargarBoliches,
-                child: ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  itemCount: boliches.length,
-                  itemBuilder: (context, index) {
-                    final boliche = boliches[index];
-                    return Container(
-                      margin:
-                          const EdgeInsets.only(
-                            bottom: AppSpacing.md,
-                          ),
-                      decoration: BoxDecoration(
-                        color: AppColors.card.withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                        boxShadow: AppShadows.softCard,
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(AppSpacing.md),
-                        leading:
-                            boliche.imagenUrl != null &&
-                                    boliche.imagenUrl!.isNotEmpty
-                                ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.button,
-                                  ),
-                                  child: Image.network(
-                                    boliche.imagenUrl!,
-                                    width: imageSize,
-                                    height: imageSize,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (_, __, ___) => Container(
-                                          width: imageSize,
-                                          height: imageSize,
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[800],
-                                            borderRadius: BorderRadius.circular(
-                                              AppRadius.button,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.image_not_supported,
-                                            color: Colors.white70,
-                                          ),
-                                        ),
-                                  ),
-                                )
-                                : Container(
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.progress),
+            )
+          : RefreshIndicator(
+              color: AppColors.progress,
+              backgroundColor: AppColors.card,
+              onRefresh: _cargarBoliches,
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                itemCount: boliches.length,
+                itemBuilder: (context, index) {
+                  final boliche = boliches[index];
+                  return Container(
+                    margin: const EdgeInsets.only(
+                      bottom: AppSpacing.md,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.card.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      boxShadow: AppShadows.softCard,
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(AppSpacing.md),
+                      leading: boliche.imagenUrl != null &&
+                              boliche.imagenUrl!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.button,
+                              ),
+                              child: Image.network(
+                                boliche.imagenUrl!,
+                                width: imageSize,
+                                height: imageSize,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
                                   width: imageSize,
                                   height: imageSize,
                                   decoration: BoxDecoration(
@@ -148,63 +131,78 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
                                     ),
                                   ),
                                   child: const Icon(
-                                    Icons.local_bar,
+                                    Icons.image_not_supported,
                                     color: Colors.white70,
                                   ),
                                 ),
-                        title: Text(
-                          boliche.nombre,
-                          style: AppTextStyles.titleSection.copyWith(
-                            fontSize: 17,
-                          ),
-                        ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Text(
-                            boliche.direccion,
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.textMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                        trailing: Wrap(
-                          spacing: 4,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.white,
                               ),
-                              tooltip: 'Editar',
-                              onPressed: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => EdicionAdminBoliche(
-                                          boliche: boliche,
-                                        ),
-                                  ),
-                                );
-                                _cargarBoliches();
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.redAccent,
+                            )
+                          : Container(
+                              width: imageSize,
+                              height: imageSize,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[800],
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.button,
+                                ),
                               ),
-                              tooltip: 'Eliminar',
-                              onPressed: () => _confirmarEliminar(boliche),
+                              child: const Icon(
+                                Icons.local_bar,
+                                color: Colors.white70,
+                              ),
                             ),
-                          ],
+                      title: Text(
+                        boliche.nombre,
+                        style: AppTextStyles.titleSection.copyWith(
+                          fontSize: 17,
                         ),
                       ),
-                    );
-                  },
-                ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                          boliche.direccion,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      trailing: Wrap(
+                        spacing: 4,
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                            ),
+                            tooltip: 'Editar',
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => EdicionAdminBoliche(
+                                    boliche: boliches[index],
+                                  ),
+                                ),
+                              );
+                              _cargarBoliches();
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete,
+                              color: Colors.redAccent,
+                            ),
+                            tooltip: 'Eliminar',
+                            onPressed: () => _confirmarEliminar(boliche),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
+            ),
     );
   }
 
@@ -228,48 +226,47 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
   Future<void> _confirmarEliminar(DetalleBolicheSimpleDto boliche) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            backgroundColor: AppColors.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            title: Text(
-              'Confirmar eliminación',
-              style: AppTextStyles.titleSection.copyWith(fontSize: 18),
-            ),
-            content: Text(
-              '¿Estás seguro de eliminar "${boliche.nombre}"?',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.textPrimary,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  'Cancelar',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button),
-                  ),
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(
-                  'Eliminar',
-                  style: GoogleFonts.orbitron(fontSize: 13),
-                ),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        title: Text(
+          'Confirmar eliminación',
+          style: AppTextStyles.titleSection.copyWith(fontSize: 18),
+        ),
+        content: Text(
+          '¿Estás seguro de eliminar "${boliche.nombre}"?',
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.textPrimary,
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancelar',
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.button),
+              ),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Eliminar',
+              style: GoogleFonts.orbitron(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
 
     if (confirm == true) {
@@ -299,117 +296,226 @@ class _AdminBolichesScreenState extends State<AdminBolichesScreen> {
     }
   }
 
+  // ================== DIALOGO CREAR CON CLOUDINARY ==================
   void _mostrarDialogoCrear() {
     final nombreController = TextEditingController();
     final direccionController = TextEditingController();
     final descripcionController = TextEditingController();
-    final imagenController = TextEditingController();
+
+    String? imagenUrlSubida;        // 👈 URL que devuelve Cloudinary
+    Uint8List? imagenPreviewBytes;  // 👈 Para mostrar preview
+    bool subiendoImagen = false;    // 👈 Loading interno del diálogo
 
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            backgroundColor: AppColors.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            title: Text(
-              'Crear nuevo boliche',
-              style: AppTextStyles.titleSection.copyWith(fontSize: 18),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _campoTexto('Nombre', nombreController),
-                  _campoTexto('Dirección', direccionController),
-                  _campoTexto('Descripción', descripcionController),
-                  _campoTexto(
-                    'Imagen URL (opcional)',
-                    imagenController,
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'Cancelar',
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryAccent,
-                  foregroundColor: AppColors.textPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button),
-                  ),
-                ),
-                onPressed: () async {
-                  if (nombreController.text.isEmpty ||
-                      direccionController.text.isEmpty ||
-                      descripcionController.text.isEmpty) {
-                    return;
-                  }
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (contextDialog, setStateDialog) {
+            Future<void> _seleccionarYSubirImagen() async {
+              final result = await FilePicker.platform.pickFiles(
+                type: FileType.image,
+                withData: true,
+              );
 
-                  final nuevoBoliche = await _adminService.crearBoliche(
-                    CrearBolicheDto(
-                      nombre: nombreController.text.trim(),
-                      direccion: direccionController.text.trim(),
-                      descripcion: descripcionController.text.trim(),
-                      imagenUrl:
-                          imagenController.text.isNotEmpty
-                              ? imagenController.text.trim()
-                              : null,
+              if (result == null || result.files.isEmpty) return;
+
+              final file = result.files.first;
+              if (file.bytes == null) return;
+
+              setStateDialog(() {
+                subiendoImagen = true;
+              });
+
+              final url = await CloudinaryService.uploadImage(
+                fileBytes: file.bytes!,
+                fileName: file.name,
+              );
+
+              if (url != null) {
+                setStateDialog(() {
+                  imagenUrlSubida = url;
+                  imagenPreviewBytes = file.bytes!;
+                  subiendoImagen = false;
+                });
+              } else {
+                setStateDialog(() {
+                  subiendoImagen = false;
+                });
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: Colors.redAccent,
+                    content: Text(
+                      'Error al subir imagen a Cloudinary',
+                      style: GoogleFonts.orbitron(color: Colors.white),
                     ),
-                  );
+                  ),
+                );
+              }
+            }
 
-                  if (nuevoBoliche != null) {
-                    boliches.add(
-                      DetalleBolicheSimpleDto(
-                        id: nuevoBoliche.id,
-                        nombre: nuevoBoliche.nombre,
-                        direccion: nuevoBoliche.direccion ?? '',
-                        imagenUrl: nuevoBoliche.imagenUrl ?? '',
-                        descripcion: '',
+            return AlertDialog(
+              backgroundColor: AppColors.card,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.card),
+              ),
+              title: Text(
+                'Crear nuevo boliche',
+                style: AppTextStyles.titleSection.copyWith(fontSize: 18),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _campoTexto('Nombre', nombreController),
+                    _campoTexto('Dirección', direccionController),
+                    _campoTexto('Descripción', descripcionController),
+
+                    const SizedBox(height: AppSpacing.md),
+
+                    // BOTÓN SELECCIONAR IMAGEN
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Imagen (opcional)',
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
-                    );
-                    setState(() {});
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: AppColors.primaryAccent,
-                        content: Text(
-                          'Boliche creado correctamente',
-                          style: GoogleFonts.orbitron(
-                            color: AppColors.textPrimary,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed:
+                              subiendoImagen ? null : _seleccionarYSubirImagen,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryAccent,
+                            foregroundColor: AppColors.textPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.button),
+                            ),
+                          ),
+                          icon: const Icon(Icons.image),
+                          label: Text(
+                            subiendoImagen
+                                ? 'Subiendo...'
+                                : (imagenUrlSubida != null
+                                    ? 'Cambiar imagen'
+                                    : 'Seleccionar imagen'),
+                            style: GoogleFonts.orbitron(fontSize: 12),
                           ),
                         ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: Colors.redAccent,
-                        content: Text(
-                          'Error al crear boliche',
-                          style: GoogleFonts.orbitron(color: Colors.white),
+                        const SizedBox(width: 8),
+                        if (subiendoImagen)
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.progress,
+                            ),
+                          ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // PREVIEW
+                    if (imagenPreviewBytes != null)
+                      ClipRRect(
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.button),
+                        child: Image.memory(
+                          imagenPreviewBytes!,
+                          height: 120,
+                          fit: BoxFit.cover,
                         ),
                       ),
-                    );
-                  }
-                },
-                child: Text(
-                  'Guardar',
-                  style: GoogleFonts.orbitron(fontSize: 13),
+                  ],
                 ),
               ),
-            ],
-          ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(
+                    'Cancelar',
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryAccent,
+                    foregroundColor: AppColors.textPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.button),
+                    ),
+                  ),
+                  onPressed: () async {
+                    if (nombreController.text.isEmpty ||
+                        direccionController.text.isEmpty ||
+                        descripcionController.text.isEmpty) {
+                      return;
+                    }
+
+                    final nuevoBoliche = await _adminService.crearBoliche(
+                      CrearBolicheDto(
+                        nombre: nombreController.text.trim(),
+                        direccion: direccionController.text.trim(),
+                        descripcion: descripcionController.text.trim(),
+                        // aquí usamos la URL de Cloudinary (o null si no subió)
+                        imagenUrl: imagenUrlSubida,
+                      ),
+                    );
+
+                    if (nuevoBoliche != null) {
+                      boliches.add(
+                        DetalleBolicheSimpleDto(
+                          id: nuevoBoliche.id,
+                          nombre: nuevoBoliche.nombre,
+                          direccion: nuevoBoliche.direccion ?? '',
+                          imagenUrl: nuevoBoliche.imagenUrl ?? '',
+                          descripcion: '',
+                        ),
+                      );
+                      setState(() {});
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: AppColors.primaryAccent,
+                          content: Text(
+                            'Boliche creado correctamente',
+                            style: GoogleFonts.orbitron(
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.redAccent,
+                          content: Text(
+                            'Error al crear boliche',
+                            style: GoogleFonts.orbitron(color: Colors.white),
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(
+                    'Guardar',
+                    style: GoogleFonts.orbitron(fontSize: 13),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

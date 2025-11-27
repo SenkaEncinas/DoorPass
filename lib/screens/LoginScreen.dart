@@ -120,160 +120,180 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // “Logo” simple circular con gradiente
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: AppGradients.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: AppShadows.softCard,
-                ),
-                child: Center(
-                  child: Text(
-                    'DP',
-                    style: AppTextStyles.titleLarge.copyWith(fontSize: 24),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                'DoorPass',
-                style: AppTextStyles.titleLarge.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 30,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Tu acceso a la fiesta',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.textMuted,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-
-              // Card de login
-              Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 420),
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: AppColors.card.withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  boxShadow: AppShadows.softCard,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Iniciar sesión',
-                      style: AppTextStyles.titleSection.copyWith(
-                        fontSize: 20,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // Email
-                    Text(
-                      'Email',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                      decoration: inputDecorationBase.copyWith(
-                        hintText: 'tucorreo@ejemplo.com',
-                        prefixIcon: const Icon(
-                          Icons.email_outlined,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // Password
-                    Text(
-                      'Contraseña',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                      decoration: inputDecorationBase.copyWith(
-                        hintText: '••••••••',
-                        prefixIcon: const Icon(
-                          Icons.lock_outline,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // Botón de login
-                    _isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.progress,
-                            ),
-                          )
-                        : SizedBox(
-                            width: double.infinity,
-                            child: _gradientButton(
-                              text: 'Iniciar sesión',
-                              onTap: _login,
-                            ),
-                          ),
-
-                    const SizedBox(height: AppSpacing.md),
-
-                    // Botón de registro
-                    Center(
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          '¿No tienes cuenta? Regístrate',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      body: Stack(
+        children: [
+          // ---------------- FONDO ----------------
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/login_bg.png', // <-- tu asset aquí
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
+
+          // Overlay oscuro para legibilidad
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.55),
+            ),
+          ),
+
+          // ---------------- CONTENIDO ----------------
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // “Logo” simple circular con gradiente
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: AppGradients.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: AppShadows.softCard,
+                    ),
+                    child: Center(
+                      child: Text(
+                        'DP',
+                        style: AppTextStyles.titleLarge.copyWith(fontSize: 24),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    'DoorPass',
+                    style: AppTextStyles.titleLarge.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 30,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Tu acceso a la fiesta',
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textMuted,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Card de login
+                  Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: AppColors.card.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      boxShadow: AppShadows.softCard,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Iniciar sesión',
+                          style: AppTextStyles.titleSection.copyWith(
+                            fontSize: 20,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Email
+                        Text(
+                          'Email',
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        TextField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                          decoration: inputDecorationBase.copyWith(
+                            hintText: 'tucorreo@ejemplo.com',
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+
+                        // Password
+                        Text(
+                          'Contraseña',
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                          decoration: inputDecorationBase.copyWith(
+                            hintText: '••••••••',
+                            prefixIcon: const Icon(
+                              Icons.lock_outline,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Botón de login
+                        _isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.progress,
+                                ),
+                              )
+                            : SizedBox(
+                                width: double.infinity,
+                                child: _gradientButton(
+                                  text: 'Iniciar sesión',
+                                  onTap: _login,
+                                ),
+                              ),
+
+                        const SizedBox(height: AppSpacing.md),
+
+                        // Botón de registro
+                        Center(
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const RegisterScreen(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              '¿No tienes cuenta? Regístrate',
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

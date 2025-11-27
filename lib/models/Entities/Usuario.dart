@@ -1,32 +1,25 @@
-import 'package:doorpass/models/Entities/Compra.dart';
-
 class Usuario {
   final int id;
   final String nombre;
   final String email;
-  final String rol; // "Admin", "Staff", "Usuario"
-  final List<Compra> compras;
+  final String rol;      // "Admin", "Staff", "Usuario"
+  final int? bolicheId;  // puede venir null
 
   Usuario({
     required this.id,
     required this.nombre,
     required this.email,
     required this.rol,
-    this.compras = const [],
+    this.bolicheId,
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) {
     return Usuario(
-      id: json['id'],
-      nombre: json['nombre'],
-      email: json['email'],
-      rol: json['rol'],
-      compras:
-          json['compras'] != null
-              ? (json['compras'] as List)
-                  .map((e) => Compra.fromJson(e))
-                  .toList()
-              : [],
+      id: json['id'] as int,
+      nombre: json['nombre'] as String,
+      email: json['email'] as String,
+      rol: json['rol'] as String,
+      bolicheId: json['bolicheId'], // puede ser null
     );
   }
 
@@ -36,7 +29,7 @@ class Usuario {
       'nombre': nombre,
       'email': email,
       'rol': rol,
-      'compras': compras.map((c) => c.toJson()).toList(),
+      'bolicheId': bolicheId,
     };
   }
 }
