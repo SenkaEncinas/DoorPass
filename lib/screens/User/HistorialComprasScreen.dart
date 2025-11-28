@@ -363,7 +363,8 @@ void _mostrarDetalleCompra(DetalleCompraDto compra) {
       ),
     ),
   );
-}
+} 
+//IVAN SE LA COME
 
   String _generarJsonCompra(DetalleCompraDto compra) {
     final data = {
