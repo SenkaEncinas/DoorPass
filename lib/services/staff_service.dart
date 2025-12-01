@@ -28,4 +28,17 @@ class StaffService {
     }
     return [];
   }
+
+  // --- INVALIDAR / CONSUMIR COMPRA (STAFF) ---
+  Future<bool> invalidarCompra(int compraId) async {
+    final token = await _getToken();
+    if (token == null) return false;
+
+    final response = await http.patch(
+      Uri.parse('$_baseUrl/invalidar/$compraId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    return response.statusCode == 200;
+  }
 }

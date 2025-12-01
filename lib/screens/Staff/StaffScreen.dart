@@ -49,6 +49,59 @@ class _StaffScreenState extends State<StaffScreen> {
     }
   }
 
+  // =========================
+  // INVALIDAR UNA COMPRA
+  // =========================
+  Future<void> _invalidarCompra(int compraId) async {
+    setState(() => loading = true);
+
+    final ok = await _staffService.invalidarCompra(compraId);
+
+    if (!mounted) return;
+
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("✅ Compra invalidada correctamente")),
+      );
+      await cargarHistorial(); // refresca
+    } else {
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ No se pudo invalidar la compra")),
+      );
+    }
+  }
+
+  void _confirmarInvalidacion(DetalleCompraDto compra) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text("Invalidar compra"),
+        content: Text(
+          "¿Seguro que quieres invalidar la compra #${compra.compraId}?\n"
+          "Esto la marcará como usada/cancelada.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("No"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _invalidarCompra(compra.compraId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text("Sí, invalidar"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,19 +120,20 @@ class _StaffScreenState extends State<StaffScreen> {
           ),
         ),
         actions: [
-          // Escanear QR
           IconButton(
             icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
             tooltip: "Escanear QR",
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final compraId = await Navigator.push<int?>(
                 context,
                 MaterialPageRoute(builder: (_) => const EscanerQrScreen()),
               );
+
+              if (compraId != null) {
+                _invalidarCompra(compraId);
+              }
             },
           ),
-
-          // Cerrar Sesión
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             tooltip: 'Cerrar sesión',
@@ -113,14 +167,13 @@ class _StaffScreenState extends State<StaffScreen> {
                   itemBuilder: (context, index) {
                     final compra = historial[index];
                     final isOpen = expanded[index];
+                    final activa = compra.estaActiva;
 
                     return Container(
-                      margin:
-                          const EdgeInsets.only(bottom: AppSpacing.md),
+                      margin: const EdgeInsets.only(bottom: AppSpacing.md),
                       decoration: BoxDecoration(
                         color: AppColors.card.withOpacity(0.98),
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.card),
+                        borderRadius: BorderRadius.circular(AppRadius.card),
                         boxShadow: AppShadows.softCard,
                       ),
                       child: Column(
@@ -143,29 +196,63 @@ class _StaffScreenState extends State<StaffScreen> {
                                 fontSize: 13,
                               ),
                             ),
-                            trailing: Icon(
-                              isOpen ? Icons.expand_less : Icons.expand_more,
-                              color: AppColors.textPrimary,
+
+                            // ✅ MODIFICADO: botón visible siempre
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.block,
+                                    color: activa ? Colors.red : Colors.grey,
+                                  ),
+                                  tooltip: activa
+                                      ? "Invalidar compra"
+                                      : "Ya invalidada",
+                                  onPressed: activa
+                                      ? () => _confirmarInvalidacion(compra)
+                                      : null,
+                                ),
+
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: activa ? Colors.green : Colors.red,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    activa ? "ACTIVA" : "INVALIDADA",
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 10),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  isOpen
+                                      ? Icons.expand_less
+                                      : Icons.expand_more,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ],
                             ),
+
                             onTap: () {
                               setState(() {
                                 expanded[index] = !expanded[index];
                               });
                             },
                           ),
+
                           if (isOpen) ...[
-                            const Divider(
-                              height: 1,
-                              color: Colors.white10,
-                            ),
+                            const Divider(height: 1, color: Colors.white10),
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSpacing.lg,
                                 vertical: AppSpacing.md,
                               ),
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _linea("Boliche:", compra.nombreBoliche),
                                   _linea("Tipo de compra:", compra.tipoCompra),
@@ -186,11 +273,35 @@ class _StaffScreenState extends State<StaffScreen> {
                                     "Mesa reservada:",
                                     compra.mesaReservada ?? "Ninguna",
                                   ),
+
+                                  // Botón grande dentro del detalle (se mantiene)
+                                  const SizedBox(height: AppSpacing.md),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      icon: const Icon(Icons.block),
+                                      label: Text(
+                                        activa
+                                            ? "INVALIDAR COMPRA"
+                                            : "COMPRA YA INVALIDADA",
+                                      ),
+                                      onPressed: activa
+                                          ? () => _confirmarInvalidacion(compra)
+                                          : null,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        disabledBackgroundColor:
+                                            Colors.grey.shade700,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                      ),
+                                    ),
+                                  ),
+
                                   const SizedBox(height: AppSpacing.md),
                                   Text(
                                     "Manillas compradas:",
-                                    style:
-                                        AppTextStyles.body.copyWith(
+                                    style: AppTextStyles.body.copyWith(
                                       color: AppColors.textSecondary,
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
@@ -203,8 +314,7 @@ class _StaffScreenState extends State<StaffScreen> {
                                           (m.precioPagado ?? 0).toDouble();
                                       return Padding(
                                         padding: const EdgeInsets.only(
-                                          bottom: 4.0,
-                                        ),
+                                            bottom: 4.0),
                                         child: Text(
                                           "- ${m.nombreManilla} (x${m.cantidad}) — Bs. ${precio.toStringAsFixed(2)}",
                                           style: AppTextStyles.body.copyWith(
@@ -217,12 +327,10 @@ class _StaffScreenState extends State<StaffScreen> {
                                   else
                                     Padding(
                                       padding: const EdgeInsets.only(
-                                        top: AppSpacing.xs,
-                                      ),
+                                          top: AppSpacing.xs),
                                       child: Text(
                                         "No hay manillas registradas",
-                                        style:
-                                            GoogleFonts.orbitron(
+                                        style: GoogleFonts.orbitron(
                                           color: AppColors.textMuted,
                                           fontSize: 12,
                                           fontStyle: FontStyle.italic,
@@ -258,7 +366,9 @@ class _StaffScreenState extends State<StaffScreen> {
             TextSpan(
               text: valor,
               style: AppTextStyles.body.copyWith(
-                color: highlight ? AppColors.textSecondary : AppColors.textPrimary,
+                color: highlight
+                    ? AppColors.textSecondary
+                    : AppColors.textPrimary,
                 fontSize: 13,
               ),
             ),
